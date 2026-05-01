@@ -43,6 +43,8 @@ def _default_db():
             "nickname": "",
             "auto_invio": False,
             "ultimo_invio": "",
+            "auto_invio_desktop": False,
+            "ultimo_invio_desktop": "",
         },
     }
 

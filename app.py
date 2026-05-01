@@ -95,15 +95,22 @@ def tradotti(keys):
 # PAGINA — Home / Dashboard
 # ============================================================
 if pagina == "home":
-    # Invio automatico promemoria all'avvio (una sola volta per sessione, con cooldown 24h)
+    # Invio automatico promemoria all'avvio (una sola volta per sessione, con cooldown 24h).
+    # Email + toast Windows sono indipendenti: ognuno con propria opzione e timestamp.
     if not st.session_state.get("_auto_reminder_done"):
         from notifications import auto_send_if_due
+        from desktop_notif import auto_send_desktop_if_due
         n_sent, err = auto_send_if_due(LANG)
+        n_toast, err_toast = auto_send_desktop_if_due(LANG)
         st.session_state["_auto_reminder_done"] = True
         if n_sent > 0:
             st.toast(L("auto_email_sent", n=n_sent), icon="📧")
         elif err and err != "SMTP_NOT_CONFIGURED":
             st.toast(L("auto_email_error"), icon="⚠️")
+        if n_toast > 0:
+            st.toast(L("auto_desktop_sent", n=n_toast), icon="🔔")
+        elif err_toast:
+            st.toast(L("auto_desktop_error"), icon="⚠️")
 
     st.title(L("welcome"))
 
@@ -463,17 +470,44 @@ elif pagina == "map":
     st.caption(L("map_caption"))
 
     from streamlit_geolocation import streamlit_geolocation
+    from weather import geocode
 
-    location = streamlit_geolocation()
+    # Input manuale: sovrascrive il GPS quando compilato. Utile su PC fissi
+    # dove la geolocalizzazione browser e' IP-based e poco precisa.
+    manual_query = st.text_input(
+        L("manual_location_label"),
+        placeholder=L("manual_location_placeholder"),
+        key="manual_loc_input",
+        help=L("manual_location_help"),
+    )
 
     lat = lon = None
     accuracy = altitude = speed = None
-    if isinstance(location, dict):
-        lat = location.get("latitude")
-        lon = location.get("longitude")
-        accuracy = location.get("accuracy")
-        altitude = location.get("altitude")
-        speed = location.get("speed")
+    location_source = None
+
+    if manual_query.strip():
+        cache_key = f"_geo_{manual_query.strip().lower()}"
+        if cache_key not in st.session_state:
+            with st.spinner(L("manual_searching")):
+                st.session_state[cache_key] = geocode(manual_query, LANG)
+        geo = st.session_state[cache_key]
+        if geo is None:
+            st.warning(L("manual_not_found"))
+        else:
+            lat, lon, place_name = geo
+            st.success(L("manual_found", place=place_name))
+            location_source = "manual"
+    else:
+        st.caption(L("manual_or_gps"))
+        location = streamlit_geolocation()
+        if isinstance(location, dict):
+            lat = location.get("latitude")
+            lon = location.get("longitude")
+            accuracy = location.get("accuracy")
+            altitude = location.get("altitude")
+            speed = location.get("speed")
+        if lat is not None and lon is not None:
+            location_source = "gps"
 
     has_pos = lat is not None and lon is not None
 
@@ -496,6 +530,60 @@ elif pagina == "map":
         st.markdown(f"### [{L('open_in_gmaps')}]({gmaps_url})")
         st.caption(L("gmaps_more_precise"))
 
+        # ----- Meteo via Open-Meteo -----
+        st.markdown("---")
+        st.subheader(L("weather_section"))
+        st.caption(L("weather_caption"))
+        import weather as weather_mod
+
+        weather_data, weather_err = weather_mod.fetch_weather(lat, lon)
+        if weather_err:
+            st.warning(L("weather_error", err=weather_err))
+        elif weather_data:
+            cur = weather_data.get("current", {})
+            cur_code = int(cur.get("weather_code", 0))
+            cur_emoji, cur_key = weather_mod.code_to_emoji_key(cur_code)
+            wcols = st.columns(4)
+            wcols[0].metric(
+                L("weather_temp"),
+                f"{cur.get('temperature_2m', 0):.0f}°C",
+            )
+            wcols[1].metric(
+                L("weather_condition"),
+                f"{cur_emoji} {L(cur_key)}",
+            )
+            wcols[2].metric(
+                L("weather_wind"),
+                f"{cur.get('wind_speed_10m', 0):.0f} km/h",
+            )
+            wcols[3].metric(
+                L("weather_humidity"),
+                f"{cur.get('relative_humidity_2m', 0):.0f}%",
+            )
+
+            daily = weather_data.get("daily") or {}
+            days = daily.get("time") or []
+            if days:
+                st.markdown(f"**{L('weather_forecast_5d')}**")
+                day_cols = st.columns(len(days))
+                for i, dcol in enumerate(day_cols):
+                    d = date.fromisoformat(days[i])
+                    dcode = int(daily["weather_code"][i])
+                    demoji, dkey = weather_mod.code_to_emoji_key(dcode)
+                    tmax = daily["temperature_2m_max"][i]
+                    tmin = daily["temperature_2m_min"][i]
+                    prec = daily["precipitation_sum"][i] or 0
+                    with dcol:
+                        st.markdown(f"**{d.strftime('%a %d/%m')}**")
+                        st.markdown(
+                            f"<div style='font-size:32px;line-height:1.2'>{demoji}</div>",
+                            unsafe_allow_html=True,
+                        )
+                        st.write(f"{tmax:.0f}° / {tmin:.0f}°")
+                        if prec > 0:
+                            st.caption(f"💧 {prec:.1f} mm")
+                st.caption(L("weather_source"))
+
         # ----- Aree sosta / camper service da OpenStreetMap -----
         st.markdown("---")
         st.subheader(L("poi_section"))
@@ -503,10 +591,33 @@ elif pagina == "map":
 
         import poi as poi_mod
 
+        # Inietta CSS per colorare lo sfondo dei chip del multiselect in base
+        # al testo dell'aria-label. Le label hanno emoji distintive che rendono
+        # il match robusto anche cambiando lingua.
+        chip_css_rules = []
+        emoji_color_map = [
+            ("🅿️", "#1f77b4"),  # area sosta camper
+            ("🚽", "#2ca02c"),   # camper service
+            ("⛺", "#d62728"),   # campeggio
+            ("🌳", "#9467bd"),   # greenzone
+        ]
+        for emoji, color in emoji_color_map:
+            chip_css_rules.append(
+                f'div[data-baseweb="select"] [data-baseweb="tag"]'
+                f'[aria-label*="{emoji}"] {{'
+                f'background-color: {color} !important; color: white !important;'
+                f'}}'
+            )
+        st.markdown(
+            "<style>" + "\n".join(chip_css_rules) + "</style>",
+            unsafe_allow_html=True,
+        )
+
         type_options = {
             L("poi_caravan_site"): "caravan_site",
             L("poi_sanitary_dump"): "sanitary_dump",
             L("poi_camp_site"): "camp_site",
+            L("poi_greenzone"): "greenzone",
         }
         col_t, col_r = st.columns([3, 1])
         with col_t:
@@ -540,6 +651,7 @@ elif pagina == "map":
             st.success(L("poi_found", n=len(results)))
 
             import folium
+            from folium.plugins import MarkerCluster
             from streamlit_folium import st_folium
 
             type_color = {k: v[2] for k, v in poi_mod.POI_TYPES.items()}
@@ -550,6 +662,10 @@ elif pagina == "map":
                 [lat, lon], tooltip=L("you_are_here"),
                 icon=folium.Icon(color="red", icon="user", prefix="fa"),
             ).add_to(fmap)
+
+            # Cluster: ZoomToBoundsOnClick + spiderfy. Tiene browser fluido
+            # anche con centinaia di POI.
+            cluster = MarkerCluster(name="pois").add_to(fmap)
             for r in results:
                 color_hex = type_color.get(r["type"], "#888888")
                 tlabel = type_label.get(r["type"], r["type"])
@@ -568,7 +684,7 @@ elif pagina == "map":
                     fill=True, fill_opacity=0.85, weight=2,
                     popup=folium.Popup(popup_html, max_width=280),
                     tooltip=name,
-                ).add_to(fmap)
+                ).add_to(cluster)
 
             st_folium(fmap, width=None, height=480, returned_objects=[])
 
@@ -1012,6 +1128,41 @@ elif pagina == "settings":
                     st.rerun()
                 except ValueError as e:
                     st.error(L("backup_invalid", err=str(e)))
+
+    st.markdown("---")
+    st.subheader(L("desktop_section"))
+    st.caption(L("desktop_help"))
+    import desktop_notif
+    if not desktop_notif.is_supported():
+        st.info(L("desktop_unsupported"))
+    else:
+        auto_d = bool(imp.get("auto_invio_desktop", False))
+        nuovo_d = st.checkbox(
+            L("auto_desktop_toggle"), value=auto_d,
+            help=L("auto_desktop_help"),
+        )
+        if nuovo_d != auto_d:
+            storage.update_impostazioni(auto_invio_desktop=bool(nuovo_d))
+            st.rerun()
+
+        ultimo_d = imp.get("ultimo_invio_desktop") or ""
+        if ultimo_d:
+            try:
+                ultimo_d_fmt = datetime.fromisoformat(ultimo_d).strftime("%d/%m/%Y %H:%M")
+                st.caption(L("last_sent_on", when=ultimo_d_fmt))
+            except ValueError:
+                pass
+        else:
+            st.caption(L("never_sent"))
+
+        if st.button(L("desktop_test"), key="dt_test"):
+            err = desktop_notif.show_toast(
+                L("toast_test_title"), L("toast_test_body"),
+            )
+            if err:
+                st.error(L("send_error", err=err))
+            else:
+                st.success(L("desktop_test_sent"))
 
     st.markdown("---")
     st.subheader(L("send_reminders_now"))
