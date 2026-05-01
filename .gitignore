@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Dati locali (camper, viaggi, documenti, credenziali SMTP)
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Edge app profile (creato dal launcher)
+.edge_profile/
+
+# PyInstaller
+build/
+dist/
+*.spec.bak
