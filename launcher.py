@@ -77,6 +77,26 @@ def find_edge() -> str | None:
     return None
 
 
+def kill_edge_for_profile(profile_dir: Path) -> None:
+    """Termina i processi msedge.exe la cui command-line referenzia il nostro
+    profilo. Senza questa pulizia, una run precedente con processi orfani fa
+    si' che il nuovo Edge faccia handoff e l'app non si apra."""
+    needle = str(profile_dir).lower()
+    ps_cmd = (
+        "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" "
+        "| Where-Object { $_.CommandLine -like '*" + needle.replace("'", "''") + "*' } "
+        "| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+    )
+    try:
+        subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_cmd],
+            capture_output=True, timeout=10,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass  # best-effort, non bloccare l'avvio
+
+
 def run_streamlit_worker(app_path: str, port: str) -> int:
     """Punto di ingresso per il sub-processo Streamlit."""
     sys.argv = [
@@ -154,6 +174,11 @@ def main() -> int:
         else:
             profile_dir = cwd / ".edge_profile"
         profile_dir.mkdir(parents=True, exist_ok=True)
+
+        # Pulisci eventuali Edge orfani sullo stesso profilo: senza, il nuovo
+        # Edge fa handoff a quelli e edge_proc.wait() ritorna subito.
+        kill_edge_for_profile(profile_dir)
+
         edge_proc = subprocess.Popen([
             edge,
             f"--app={url}",

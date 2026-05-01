@@ -2,9 +2,7 @@
 
 Gestione camper per proprietari: scadenze, libretto, viaggi, consumi e altro.
 """
-import smtplib
-from email.mime.text import MIMEText
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -84,6 +82,9 @@ TIPI_SCADENZA_KEYS = ["tipo_revisione", "tipo_vignetta", "tipo_assicurazione",
 TIPI_DOCUMENTI_KEYS = ["doc_libretto", "doc_assicurazione", "doc_revisione", "doc_bollo",
                        "doc_ricevuta", "doc_manuale", "doc_foto", "doc_altro"]
 CHECKLIST_CAT_KEYS = ["cat_partenza", "cat_apertura", "cat_chiusura", "cat_manutenzione"]
+CATEGORIE_INTERVENTO_KEYS = ["int_revisione", "int_tagliando", "int_gomme", "int_freni",
+                             "int_elettrico", "int_idraulico", "int_carrozzeria",
+                             "int_motore", "int_altro"]
 
 
 def tradotti(keys):
@@ -94,6 +95,16 @@ def tradotti(keys):
 # PAGINA — Home / Dashboard
 # ============================================================
 if pagina == "home":
+    # Invio automatico promemoria all'avvio (una sola volta per sessione, con cooldown 24h)
+    if not st.session_state.get("_auto_reminder_done"):
+        from notifications import auto_send_if_due
+        n_sent, err = auto_send_if_due(LANG)
+        st.session_state["_auto_reminder_done"] = True
+        if n_sent > 0:
+            st.toast(L("auto_email_sent", n=n_sent), icon="📧")
+        elif err and err != "SMTP_NOT_CONFIGURED":
+            st.toast(L("auto_email_error"), icon="⚠️")
+
     st.title(L("welcome"))
 
     hero_path = Path(__file__).parent / "assets" / "hero.jpg"
@@ -144,20 +155,36 @@ if pagina == "home":
             tot_int = sum(i["costo"] for i in db["interventi"] if i["camper_id"] == cid)
             tot_rif = sum(r["costo"] for r in db["rifornimenti"] if r["camper_id"] == cid)
             tot_via = sum(v["costo"] for v in db["viaggi"] if v["camper_id"] == cid)
+            totale = tot_int + tot_rif + tot_via
+            km_percorsi = max(0, c["km"] - c.get("km_iniziale", c["km"]))
+            eur_km = (totale / km_percorsi) if km_percorsi > 0 else None
             rows_costi.append({
                 L("camper"): f"{c['marca']} {c['modello']}",
                 L("maintenance"): tot_int,
                 L("fuel_label"): tot_rif,
                 L("trips_label"): tot_via,
-                L("total"): tot_int + tot_rif + tot_via,
+                L("total"): totale,
+                L("km_owned"): km_percorsi,
+                L("eur_per_km"): eur_km if eur_km is not None else 0.0,
+                "_eur_km_set": eur_km is not None,
             })
         if rows_costi:
             df_costi = pd.DataFrame(rows_costi)
+            df_view = df_costi.drop(columns=["_eur_km_set"]).copy()
+            # Mostra "—" quando non abbiamo ancora km percorsi
+            df_view[L("eur_per_km")] = [
+                f"€ {r[L('eur_per_km')]:.3f}" if r["_eur_km_set"] else "—"
+                for _, r in df_costi.iterrows()
+            ]
+            df_view[L("km_owned")] = df_view[L("km_owned")].map(
+                lambda v: f"{v:,}".replace(",", ".")
+            )
             fmt_cols = [L("maintenance"), L("fuel_label"), L("trips_label"), L("total")]
             st.dataframe(
-                df_costi.style.format({c: "€ {:.2f}" for c in fmt_cols}),
+                df_view.style.format({c: "€ {:.2f}" for c in fmt_cols}),
                 width="stretch", hide_index=True,
             )
+            st.caption(L("eur_per_km_help"))
 
 
 # ============================================================
@@ -177,6 +204,7 @@ elif pagina == "campers":
                 modello = st.text_input(L("model"))
                 targa = st.text_input(L("plate"))
             km = st.number_input(L("current_km"), min_value=0, value=50000, step=1000)
+            st.caption(L("km_iniziale_help"))
 
             if st.form_submit_button(L("save_camper")):
                 if not (marca and modello and targa):
@@ -212,6 +240,17 @@ elif pagina == "campers":
                     if st.button("🗑️ " + L("delete"), key=f"del_{c['id']}"):
                         storage.delete_camper(c["id"])
                         st.rerun()
+                with st.expander(L("edit_km_iniziale"), expanded=False):
+                    km_init = st.number_input(
+                        L("km_iniziale_label"), min_value=0,
+                        value=int(c.get("km_iniziale", c["km"])),
+                        step=500, key=f"kmin_{c['id']}",
+                    )
+                    if km_init != c.get("km_iniziale", c["km"]):
+                        if st.button(L("save"), key=f"savekmin_{c['id']}"):
+                            storage.update_camper_km_iniziale(c["id"], int(km_init))
+                            st.rerun()
+                    st.caption(L("km_iniziale_help"))
 
 
 # ============================================================
@@ -276,6 +315,9 @@ elif pagina == "logbook":
     st.title(L("page_logbook").split(" ", 1)[1])
     db = storage.load()
 
+    cat_int_labels = tradotti(CATEGORIE_INTERVENTO_KEYS)
+    cat_int_label_to_key = dict(zip(cat_int_labels, CATEGORIE_INTERVENTO_KEYS))
+
     with st.expander(L("add_intervention"), expanded=not db["interventi"]):
         with st.form("nuovo_intervento", clear_on_submit=True):
             cid, _ = select_camper("int_camper")
@@ -283,6 +325,7 @@ elif pagina == "logbook":
             with col1:
                 data_int = st.date_input(L("date"), value=date.today())
                 km = st.number_input(L("km"), min_value=0, value=0, step=1000)
+                categoria_label = st.selectbox(L("category"), cat_int_labels)
             with col2:
                 costo = st.number_input(L("cost_eur"), min_value=0.0, value=0.0, step=10.0, format="%.2f")
             descrizione = st.text_area(L("intervention_desc"))
@@ -292,7 +335,9 @@ elif pagina == "logbook":
                 elif not descrizione:
                     st.error(L("fill_description"))
                 else:
-                    storage.add_intervento(cid, data_int, descrizione, float(costo), int(km))
+                    cat_key = cat_int_label_to_key[categoria_label]
+                    storage.add_intervento(cid, data_int, descrizione,
+                                           float(costo), int(km), categoria=cat_key)
                     st.success(L("intervention_saved"))
                     st.rerun()
 
@@ -306,6 +351,7 @@ elif pagina == "logbook":
         rows = [{
             L("date"): date.fromisoformat(i["data"]).strftime("%d/%m/%Y"),
             L("camper"): cmap.get(i["camper_id"], "?"),
+            L("category"): L(i.get("categoria", "int_altro")),
             L("description"): i["descrizione"],
             L("km"): f"{i['km']:,}".replace(",", "."),
             L("cost"): f"€ {i['costo']:.2f}",
@@ -450,6 +496,95 @@ elif pagina == "map":
         st.markdown(f"### [{L('open_in_gmaps')}]({gmaps_url})")
         st.caption(L("gmaps_more_precise"))
 
+        # ----- Aree sosta / camper service da OpenStreetMap -----
+        st.markdown("---")
+        st.subheader(L("poi_section"))
+        st.caption(L("poi_caption"))
+
+        import poi as poi_mod
+
+        type_options = {
+            L("poi_caravan_site"): "caravan_site",
+            L("poi_sanitary_dump"): "sanitary_dump",
+            L("poi_camp_site"): "camp_site",
+        }
+        col_t, col_r = st.columns([3, 1])
+        with col_t:
+            selected_labels = st.multiselect(
+                L("poi_types"),
+                options=list(type_options.keys()),
+                default=list(type_options.keys()),
+                key="poi_types_sel",
+            )
+        with col_r:
+            radius_km = st.selectbox(
+                L("poi_radius"), options=[10, 25, 50, 100],
+                index=1, key="poi_radius_sel",
+            )
+        selected_types = tuple(type_options[lbl] for lbl in selected_labels)
+
+        if st.button(L("poi_search"), key="poi_search_btn"):
+            with st.spinner(L("poi_searching")):
+                results, err = poi_mod.fetch_pois(lat, lon, int(radius_km), selected_types)
+            st.session_state["_poi_results"] = results
+            st.session_state["_poi_err"] = err
+
+        results = st.session_state.get("_poi_results", [])
+        err = st.session_state.get("_poi_err")
+
+        if err:
+            st.error(L("poi_error", err=err))
+        elif results is not None and len(results) == 0 and "_poi_results" in st.session_state:
+            st.info(L("poi_none_found"))
+        elif results:
+            st.success(L("poi_found", n=len(results)))
+
+            import folium
+            from streamlit_folium import st_folium
+
+            type_color = {k: v[2] for k, v in poi_mod.POI_TYPES.items()}
+            type_label = {k: L(v[1]) for k, v in poi_mod.POI_TYPES.items()}
+
+            fmap = folium.Map(location=[lat, lon], zoom_start=11)
+            folium.Marker(
+                [lat, lon], tooltip=L("you_are_here"),
+                icon=folium.Icon(color="red", icon="user", prefix="fa"),
+            ).add_to(fmap)
+            for r in results:
+                color_hex = type_color.get(r["type"], "#888888")
+                tlabel = type_label.get(r["type"], r["type"])
+                name = r["name"] or L("poi_no_name")
+                popup_html = (
+                    f"<b>{name}</b><br>{tlabel}<br>{r['distance_km']} km"
+                )
+                if r.get("operator"):
+                    popup_html += f"<br>{r['operator']}"
+                if r.get("fee"):
+                    popup_html += f"<br>{L('poi_fee')}: {r['fee']}"
+                if r.get("website"):
+                    popup_html += f'<br><a href="{r["website"]}" target="_blank">{L("poi_website")}</a>'
+                folium.CircleMarker(
+                    [r["lat"], r["lon"]], radius=7, color=color_hex,
+                    fill=True, fill_opacity=0.85, weight=2,
+                    popup=folium.Popup(popup_html, max_width=280),
+                    tooltip=name,
+                ).add_to(fmap)
+
+            st_folium(fmap, width=None, height=480, returned_objects=[])
+
+            # Lista compatta sotto la mappa
+            st.markdown(f"**{L('poi_list')}**")
+            for r in results[:50]:
+                name = r["name"] or L("poi_no_name")
+                tlabel = type_label.get(r["type"], r["type"])
+                gm = f"https://www.google.com/maps?q={r['lat']},{r['lon']}"
+                st.markdown(
+                    f"- **{name}** — _{tlabel}_ · {r['distance_km']} km · "
+                    f"[{L('open_in_gmaps')}]({gm})"
+                )
+            if len(results) > 50:
+                st.caption(L("poi_truncated", shown=50, total=len(results)))
+
 
 # ============================================================
 # PAGINA — Rifornimenti
@@ -469,6 +604,7 @@ elif pagina == "fuel":
             with col2:
                 costo = st.number_input(L("total_cost_eur"), min_value=0.0, value=0.0, step=1.0, format="%.2f")
                 distributore = st.text_input(L("station"))
+                pieno = st.checkbox(L("full_tank"), value=True, help=L("full_tank_help"))
             note = st.text_input(L("notes_optional"))
             if st.form_submit_button(L("save_fuel")):
                 if cid is None:
@@ -477,7 +613,8 @@ elif pagina == "fuel":
                     st.error(L("fill_km_liters"))
                 else:
                     storage.add_rifornimento(cid, data_rif, int(km), float(litri),
-                                             float(costo), distributore, note)
+                                             float(costo), distributore, note,
+                                             pieno=bool(pieno))
                     st.success(L("fuel_saved"))
                     st.rerun()
 
@@ -494,11 +631,16 @@ elif pagina == "fuel":
                 [r for r in db["rifornimenti"] if r["camper_id"] == c["id"]],
                 key=lambda x: x["km"],
             )
-            prev_km = None
+            # Per ogni "pieno", somma i litri dei rifornimenti dal pieno precedente
+            # (inclusi quelli intermedi) diviso la distanza percorsa.
+            prev_pieno_km = None
+            litri_dal_pieno = 0.0
             for r in rifs:
-                if prev_km is not None and r["km"] > prev_km and r["litri"] > 0:
-                    delta_km = r["km"] - prev_km
-                    consumo_str = f"{(r['litri'] / delta_km) * 100:.1f}"
+                pieno = r.get("pieno", True)
+                litri_dal_pieno += r["litri"]
+                if pieno and prev_pieno_km is not None and r["km"] > prev_pieno_km:
+                    delta_km = r["km"] - prev_pieno_km
+                    consumo_str = f"{(litri_dal_pieno / delta_km) * 100:.1f}"
                 else:
                     consumo_str = "—"
                 prezzo_l = r["costo"] / r["litri"] if r["litri"] > 0 else 0
@@ -507,6 +649,7 @@ elif pagina == "fuel":
                     L("camper"): cmap.get(r["camper_id"], "?"),
                     L("km"): f"{r['km']:,}".replace(",", "."),
                     L("liters"): f"{r['litri']:.2f}",
+                    L("full_tank_short"): "✅" if pieno else "—",
                     "€/L": f"{prezzo_l:.3f}",
                     L("cost"): f"€ {r['costo']:.2f}",
                     L("station"): r["distributore"] or "",
@@ -514,7 +657,9 @@ elif pagina == "fuel":
                     "_id": r["id"],
                     "_data": r["data"],
                 })
-                prev_km = r["km"]
+                if pieno:
+                    prev_pieno_km = r["km"]
+                    litri_dal_pieno = 0.0
         rows.sort(key=lambda x: x["_data"], reverse=True)
         df = pd.DataFrame(rows).drop(columns=["_id", "_data"])
         st.dataframe(df, width="stretch", hide_index=True)
@@ -525,12 +670,19 @@ elif pagina == "fuel":
                 [r for r in db["rifornimenti"] if r["camper_id"] == c["id"]],
                 key=lambda x: x["km"],
             )
-            if len(rifs) >= 2:
-                tot_litri = sum(r["litri"] for r in rifs[1:])
-                tot_km = rifs[-1]["km"] - rifs[0]["km"]
-                if tot_km > 0:
+            # Media: solo tra il primo e l'ultimo "pieno"; somma litri intermedi.
+            pieni_km = [(idx, r["km"]) for idx, r in enumerate(rifs) if r.get("pieno", True)]
+            if len(pieni_km) >= 2:
+                first_idx, first_km = pieni_km[0]
+                last_idx, last_km = pieni_km[-1]
+                tot_litri = sum(r["litri"] for r in rifs[first_idx + 1: last_idx + 1])
+                tot_km = last_km - first_km
+                if tot_km > 0 and tot_litri > 0:
                     medio = (tot_litri / tot_km) * 100
-                    st.write(f"- {c['marca']} {c['modello']}: **{medio:.1f} l/100km** ({tot_km:,} km)".replace(",", "."))
+                    st.write(
+                        f"- {c['marca']} {c['modello']}: **{medio:.1f} l/100km** "
+                        f"({tot_km:,} km)".replace(",", ".")
+                    )
 
         with st.expander(L("delete_fuel_section")):
             for r in rows:
@@ -694,8 +846,10 @@ elif pagina == "stats":
             st.write(L("no_intervention_short"))
         else:
             df_i = pd.DataFrame(ints)
-            df_i["categoria"] = df_i["descrizione"].str.split().str[0].str.title()
-            agg = df_i.groupby("categoria")["costo"].sum().sort_values(ascending=False)
+            df_i["categoria_label"] = df_i["categoria"].fillna("int_altro").map(
+                lambda k: L(k if k in CATEGORIE_INTERVENTO_KEYS else "int_altro")
+            )
+            agg = df_i.groupby("categoria_label")["costo"].sum().sort_values(ascending=False)
             st.bar_chart(agg)
 
         st.markdown("---")
@@ -824,41 +978,80 @@ elif pagina == "settings":
             st.rerun()
 
     st.markdown("---")
+    st.subheader(L("backup_section"))
+    st.caption(L("backup_help"))
+    import backup as backup_mod
+
+    col_exp, col_imp = st.columns(2)
+    with col_exp:
+        st.markdown(f"**{L('backup_export')}**")
+        if st.button(L("backup_prepare"), key="bk_prep"):
+            fname, data = backup_mod.export_zip()
+            st.session_state["_backup_data"] = data
+            st.session_state["_backup_name"] = fname
+        if st.session_state.get("_backup_data"):
+            st.download_button(
+                L("backup_download"),
+                data=st.session_state["_backup_data"],
+                file_name=st.session_state["_backup_name"],
+                mime="application/zip",
+                key="bk_dl",
+            )
+
+    with col_imp:
+        st.markdown(f"**{L('backup_import')}**")
+        st.caption(L("backup_import_help"))
+        up = st.file_uploader(L("backup_zip_file"), type=["zip"], key="bk_up")
+        if up is not None:
+            confermo = st.checkbox(L("backup_import_confirm"), key="bk_cnf")
+            if confermo and st.button(L("backup_restore_now"), key="bk_run"):
+                try:
+                    backup_mod.import_zip(up.getvalue())
+                    st.session_state.pop("_backup_data", None)
+                    st.success(L("backup_imported"))
+                    st.rerun()
+                except ValueError as e:
+                    st.error(L("backup_invalid", err=str(e)))
+
+    st.markdown("---")
     st.subheader(L("send_reminders_now"))
-    if not imp.get("email") or not imp.get("smtp_host"):
+    import notifications
+
+    if not notifications.is_smtp_configured(db):
         st.info(L("configure_email_first"))
     else:
-        cmap = camper_label_map(db)
         soglia_v = imp.get("giorni_promemoria", 30)
-        imminenti = []
-        for s in db["scadenze"]:
-            d = date.fromisoformat(s["data"])
-            giorni = (d - date.today()).days
-            if giorni <= soglia_v:
-                imminenti.append((giorni, s, d))
+        imminenti = notifications.imminent_deadlines(db)
+
+        # Toggle invio automatico
+        auto_corrente = bool(imp.get("auto_invio", False))
+        nuovo_auto = st.checkbox(
+            L("auto_email_toggle"), value=auto_corrente,
+            help=L("auto_email_help"),
+        )
+        if nuovo_auto != auto_corrente:
+            storage.update_impostazioni(auto_invio=bool(nuovo_auto))
+            st.rerun()
+
+        # Ultimo invio
+        ultimo = imp.get("ultimo_invio") or ""
+        if ultimo:
+            try:
+                ultimo_fmt = datetime.fromisoformat(ultimo).strftime("%d/%m/%Y %H:%M")
+                st.caption(L("last_sent_on", when=ultimo_fmt))
+            except ValueError:
+                pass
+        else:
+            st.caption(L("never_sent"))
+
         if not imminenti:
             st.success(L("no_upcoming_to_notify"))
         else:
             st.write(L("found_n_deadlines", n=len(imminenti), days=soglia_v))
             if st.button(L("send_now")):
-                imminenti.sort(key=lambda x: x[0])
-                righe = []
-                for giorni, s, d in imminenti:
-                    when = L("expired") if giorni < 0 else L("in_n_days", n=giorni)
-                    righe.append(
-                        f"- {s['tipo']} ({cmap.get(s['camper_id'], '?')}) "
-                        f"— {d.strftime('%d/%m/%Y')} ({when})"
-                    )
-                body = L("email_intro") + "\n".join(righe)
-                msg = MIMEText(body)
-                msg["Subject"] = L("email_subject", n=len(imminenti))
-                msg["From"] = imp["smtp_user"]
-                msg["To"] = imp["email"]
-                try:
-                    with smtplib.SMTP(imp["smtp_host"], int(imp["smtp_port"])) as srv:
-                        srv.starttls()
-                        srv.login(imp["smtp_user"], imp["smtp_pass"])
-                        srv.send_message(msg)
+                n_sent, err = notifications.send_reminders(LANG)
+                if err and err != "SMTP_NOT_CONFIGURED":
+                    st.error(L("send_error", err=err))
+                else:
                     st.success(L("email_sent_to", to=imp["email"]))
-                except Exception as e:
-                    st.error(L("send_error", err=e))
+                    st.rerun()

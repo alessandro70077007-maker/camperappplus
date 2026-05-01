@@ -804,6 +804,262 @@ TRANSLATIONS = {
     "pdf_section_maintenance": {"it": "Interventi e manutenzione", "en": "Interventions and maintenance", "de": "Wartung", "fr": "Interventions et entretien", "es": "Intervenciones y mantenimiento"},
     "pdf_section_trips": {"it": "Viaggi", "en": "Trips", "de": "Reisen", "fr": "Voyages", "es": "Viajes"},
     "pdf_section_fuel": {"it": "Rifornimenti", "en": "Refills", "de": "Tankstopps", "fr": "Pleins", "es": "Repostajes"},
+
+    # ---------- Costi e km ----------
+    "km_owned": {
+        "it": "Km posseduti", "en": "Owned km", "de": "Gefahrene km",
+        "fr": "Km parcourus", "es": "Km recorridos",
+    },
+    "eur_per_km": {
+        "it": "€/km", "en": "€/km", "de": "€/km", "fr": "€/km", "es": "€/km",
+    },
+    "eur_per_km_help": {
+        "it": "€/km = costi totali / km percorsi da quando possiedi il camper. Imposta i 'km iniziali' del camper per renderlo accurato.",
+        "en": "€/km = total costs / km driven since you own the camper. Set the camper's 'initial km' to make it accurate.",
+        "de": "€/km = Gesamtkosten / km seit Besitz. Setze die 'Anfangs-km' für genaue Werte.",
+        "fr": "€/km = coûts totaux / km parcourus depuis l'acquisition. Définissez les 'km initiaux' pour plus de précision.",
+        "es": "€/km = costes totales / km recorridos desde la compra. Define los 'km iniciales' para mayor precisión.",
+    },
+
+    # ---------- Km iniziali ----------
+    "km_iniziale_help": {
+        "it": "Imposta i km del camper al momento dell'acquisto: servono per calcolare €/km reali.",
+        "en": "Set the camper's km when you bought it: needed for accurate €/km.",
+        "de": "Anfangs-km zum Zeitpunkt des Kaufs eingeben: nötig für genaue €/km.",
+        "fr": "Indiquez les km au moment de l'achat : nécessaires pour le €/km réel.",
+        "es": "Define los km al momento de la compra: necesarios para el €/km real.",
+    },
+    "edit_km_iniziale": {
+        "it": "✏️ Modifica km iniziali",
+        "en": "✏️ Edit initial km",
+        "de": "✏️ Anfangs-km bearbeiten",
+        "fr": "✏️ Modifier les km initiaux",
+        "es": "✏️ Editar km iniciales",
+    },
+    "km_iniziale_label": {
+        "it": "Km iniziali (data acquisto)",
+        "en": "Initial km (purchase date)",
+        "de": "Anfangs-km (Kaufdatum)",
+        "fr": "Km initiaux (date d'achat)",
+        "es": "Km iniciales (fecha de compra)",
+    },
+
+    # ---------- Pieno carburante ----------
+    "full_tank": {
+        "it": "Pieno", "en": "Full tank", "de": "Volltanken",
+        "fr": "Plein", "es": "Lleno",
+    },
+    "full_tank_short": {
+        "it": "Pieno?", "en": "Full?", "de": "Voll?", "fr": "Plein?", "es": "¿Lleno?",
+    },
+    "full_tank_help": {
+        "it": "Spunta solo se hai fatto il pieno. Il consumo l/100km viene calcolato solo tra rifornimenti completi.",
+        "en": "Check only if you filled up the tank. l/100km is computed only between full fillups.",
+        "de": "Nur ankreuzen, wenn vollgetankt. Verbrauch wird nur zwischen Volltankungen berechnet.",
+        "fr": "Cochez uniquement si plein effectué. La consommation est calculée entre pleins complets.",
+        "es": "Marca solo si hiciste el lleno. El consumo se calcula solo entre llenos completos.",
+    },
+
+    # ---------- Categorie intervento ----------
+    "int_revisione": {"it": "Revisione", "en": "Inspection", "de": "Hauptuntersuchung", "fr": "Contrôle technique", "es": "ITV"},
+    "int_tagliando": {"it": "Tagliando", "en": "Service", "de": "Inspektion", "fr": "Révision", "es": "Mantenimiento"},
+    "int_gomme": {"it": "Gomme", "en": "Tires", "de": "Reifen", "fr": "Pneus", "es": "Neumáticos"},
+    "int_freni": {"it": "Freni", "en": "Brakes", "de": "Bremsen", "fr": "Freins", "es": "Frenos"},
+    "int_elettrico": {"it": "Elettrico", "en": "Electrical", "de": "Elektrik", "fr": "Électrique", "es": "Eléctrico"},
+    "int_idraulico": {"it": "Idraulico/Acqua", "en": "Plumbing/Water", "de": "Wasseranlage", "fr": "Plomberie/Eau", "es": "Fontanería/Agua"},
+    "int_carrozzeria": {"it": "Carrozzeria", "en": "Body", "de": "Karosserie", "fr": "Carrosserie", "es": "Carrocería"},
+    "int_motore": {"it": "Motore", "en": "Engine", "de": "Motor", "fr": "Moteur", "es": "Motor"},
+    "int_altro": {"it": "Altro", "en": "Other", "de": "Sonstiges", "fr": "Autre", "es": "Otro"},
+
+    # ---------- Backup / Ripristino ----------
+    "backup_section": {
+        "it": "💾 Backup e ripristino", "en": "💾 Backup & restore",
+        "de": "💾 Sicherung & Wiederherstellung", "fr": "💾 Sauvegarde & restauration",
+        "es": "💾 Copia y restauración",
+    },
+    "backup_help": {
+        "it": "Esporta tutti i tuoi dati e documenti in un file ZIP, oppure ripristina un backup precedente. Utile quando cambi PC.",
+        "en": "Export all your data and documents to a ZIP, or restore a previous backup. Useful when switching computers.",
+        "de": "Alle Daten und Dokumente als ZIP exportieren oder ein Backup wiederherstellen. Nützlich bei PC-Wechsel.",
+        "fr": "Exportez données et documents en ZIP, ou restaurez une sauvegarde. Utile pour changer d'ordinateur.",
+        "es": "Exporta todos tus datos y documentos a ZIP, o restaura una copia. Útil al cambiar de PC.",
+    },
+    "backup_export": {
+        "it": "Esporta", "en": "Export", "de": "Export", "fr": "Exporter", "es": "Exportar",
+    },
+    "backup_prepare": {
+        "it": "📦 Prepara backup", "en": "📦 Prepare backup", "de": "📦 Backup vorbereiten",
+        "fr": "📦 Préparer la sauvegarde", "es": "📦 Preparar copia",
+    },
+    "backup_download": {
+        "it": "⬇️ Scarica ZIP", "en": "⬇️ Download ZIP", "de": "⬇️ ZIP herunterladen",
+        "fr": "⬇️ Télécharger le ZIP", "es": "⬇️ Descargar ZIP",
+    },
+    "backup_import": {
+        "it": "Importa", "en": "Import", "de": "Import", "fr": "Importer", "es": "Importar",
+    },
+    "backup_import_help": {
+        "it": "⚠️ L'import sostituisce TUTTI i dati attuali. Operazione irreversibile.",
+        "en": "⚠️ Import REPLACES all current data. Cannot be undone.",
+        "de": "⚠️ Der Import ERSETZT alle aktuellen Daten. Nicht rückgängig zu machen.",
+        "fr": "⚠️ L'import REMPLACE toutes les données actuelles. Irréversible.",
+        "es": "⚠️ La importación REEMPLAZA todos los datos. Acción irreversible.",
+    },
+    "backup_zip_file": {
+        "it": "File ZIP di backup", "en": "Backup ZIP file", "de": "Backup-ZIP-Datei",
+        "fr": "Fichier ZIP de sauvegarde", "es": "Archivo ZIP de copia",
+    },
+    "backup_import_confirm": {
+        "it": "Confermo: sostituisci tutti i dati con il backup",
+        "en": "I confirm: replace all data with this backup",
+        "de": "Ich bestätige: alle Daten durch das Backup ersetzen",
+        "fr": "Je confirme : remplacer toutes les données par cette sauvegarde",
+        "es": "Confirmo: reemplazar todos los datos con esta copia",
+    },
+    "backup_restore_now": {
+        "it": "🔁 Ripristina ora", "en": "🔁 Restore now", "de": "🔁 Jetzt wiederherstellen",
+        "fr": "🔁 Restaurer maintenant", "es": "🔁 Restaurar ahora",
+    },
+    "backup_imported": {
+        "it": "Backup ripristinato.", "en": "Backup restored.",
+        "de": "Backup wiederhergestellt.", "fr": "Sauvegarde restaurée.",
+        "es": "Copia restaurada.",
+    },
+    "backup_invalid": {
+        "it": "Backup non valido: {err}", "en": "Invalid backup: {err}",
+        "de": "Ungültiges Backup: {err}", "fr": "Sauvegarde invalide : {err}",
+        "es": "Copia no válida: {err}",
+    },
+
+    # ---------- Promemoria automatici ----------
+    "auto_email_toggle": {
+        "it": "Invia promemoria automaticamente all'avvio",
+        "en": "Send reminders automatically on startup",
+        "de": "Erinnerungen beim Start automatisch senden",
+        "fr": "Envoyer les rappels automatiquement au démarrage",
+        "es": "Enviar recordatorios automáticamente al iniciar",
+    },
+    "auto_email_help": {
+        "it": "Quando attivo, all'avvio dell'app le scadenze imminenti vengono inviate via email. Cooldown 24h per evitare email duplicate.",
+        "en": "When enabled, upcoming deadlines are emailed at app startup. 24h cooldown to avoid duplicates.",
+        "de": "Wenn aktiv, werden anstehende Fristen beim Start per E-Mail gesendet. 24h Cooldown verhindert Duplikate.",
+        "fr": "Si activé, les échéances proches sont envoyées par e-mail au démarrage. Cooldown 24h.",
+        "es": "Si está activo, las fechas próximas se envían por correo al iniciar. Cooldown de 24h.",
+    },
+    "auto_email_sent": {
+        "it": "Promemoria inviato ({n} scadenze)",
+        "en": "Reminder sent ({n} deadlines)",
+        "de": "Erinnerung gesendet ({n} Fristen)",
+        "fr": "Rappel envoyé ({n} échéances)",
+        "es": "Recordatorio enviado ({n} vencimientos)",
+    },
+    "auto_email_error": {
+        "it": "Invio automatico non riuscito",
+        "en": "Auto-send failed",
+        "de": "Automatischer Versand fehlgeschlagen",
+        "fr": "Envoi automatique échoué",
+        "es": "Envío automático fallido",
+    },
+    "last_sent_on": {
+        "it": "Ultimo invio: {when}",
+        "en": "Last sent: {when}",
+        "de": "Zuletzt gesendet: {when}",
+        "fr": "Dernier envoi : {when}",
+        "es": "Último envío: {when}",
+    },
+    "never_sent": {
+        "it": "Mai inviato.", "en": "Never sent.", "de": "Nie gesendet.",
+        "fr": "Jamais envoyé.", "es": "Nunca enviado.",
+    },
+
+    # ---------- Aree sosta / POI mappa ----------
+    "poi_section": {
+        "it": "📍 Aree sosta e camper service nelle vicinanze",
+        "en": "📍 Camper sites & service points nearby",
+        "de": "📍 Stell- und Versorgungsplätze in der Nähe",
+        "fr": "📍 Aires camping-car & vidange à proximité",
+        "es": "📍 Áreas y servicios de autocaravana cercanos",
+    },
+    "poi_caption": {
+        "it": "Dati da OpenStreetMap. La prima ricerca puo' richiedere qualche secondo; risultati in cache per 24h.",
+        "en": "Data from OpenStreetMap. First search may take a few seconds; results cached 24h.",
+        "de": "Daten von OpenStreetMap. Erste Suche kann etwas dauern; Ergebnisse 24h zwischengespeichert.",
+        "fr": "Données OpenStreetMap. La 1re recherche peut prendre un instant ; mise en cache 24h.",
+        "es": "Datos de OpenStreetMap. La primera búsqueda puede tardar; resultados en caché 24h.",
+    },
+    "poi_caravan_site": {
+        "it": "🅿️ Area sosta camper", "en": "🅿️ Caravan site",
+        "de": "🅿️ Wohnmobil-Stellplatz", "fr": "🅿️ Aire camping-car",
+        "es": "🅿️ Área de autocaravanas",
+    },
+    "poi_sanitary_dump": {
+        "it": "🚽 Camper service (scarico)", "en": "🚽 Sanitary dump station",
+        "de": "🚽 Entsorgungsstation", "fr": "🚽 Station de vidange",
+        "es": "🚽 Vaciado de aguas",
+    },
+    "poi_camp_site": {
+        "it": "⛺ Campeggio", "en": "⛺ Camp site", "de": "⛺ Campingplatz",
+        "fr": "⛺ Camping", "es": "⛺ Camping",
+    },
+    "poi_types": {
+        "it": "Cosa cercare", "en": "What to search", "de": "Wonach suchen",
+        "fr": "Que chercher", "es": "Qué buscar",
+    },
+    "poi_radius": {
+        "it": "Raggio (km)", "en": "Radius (km)", "de": "Umkreis (km)",
+        "fr": "Rayon (km)", "es": "Radio (km)",
+    },
+    "poi_search": {
+        "it": "🔎 Cerca", "en": "🔎 Search", "de": "🔎 Suchen",
+        "fr": "🔎 Chercher", "es": "🔎 Buscar",
+    },
+    "poi_searching": {
+        "it": "Sto cercando...", "en": "Searching...", "de": "Suche...",
+        "fr": "Recherche...", "es": "Buscando...",
+    },
+    "poi_error": {
+        "it": "Errore nella ricerca: {err}", "en": "Search error: {err}",
+        "de": "Suchfehler: {err}", "fr": "Erreur de recherche : {err}",
+        "es": "Error de búsqueda: {err}",
+    },
+    "poi_none_found": {
+        "it": "Nessuna area trovata in questa zona. Prova ad ampliare il raggio.",
+        "en": "No areas found nearby. Try a larger radius.",
+        "de": "Keine Bereiche gefunden. Probiere einen grosseren Umkreis.",
+        "fr": "Aucune aire trouvee. Essayez un rayon plus grand.",
+        "es": "Sin resultados cercanos. Prueba un radio mayor.",
+    },
+    "poi_found": {
+        "it": "Trovate {n} aree.", "en": "Found {n} areas.",
+        "de": "{n} Plätze gefunden.", "fr": "{n} aires trouvées.",
+        "es": "{n} áreas encontradas.",
+    },
+    "poi_no_name": {
+        "it": "(senza nome)", "en": "(unnamed)", "de": "(ohne Namen)",
+        "fr": "(sans nom)", "es": "(sin nombre)",
+    },
+    "poi_fee": {
+        "it": "A pagamento", "en": "Fee", "de": "Gebührenpflichtig",
+        "fr": "Payant", "es": "De pago",
+    },
+    "poi_website": {
+        "it": "Sito web", "en": "Website", "de": "Webseite",
+        "fr": "Site web", "es": "Sitio web",
+    },
+    "poi_list": {
+        "it": "Elenco", "en": "List", "de": "Liste", "fr": "Liste", "es": "Lista",
+    },
+    "poi_truncated": {
+        "it": "Mostrate {shown} su {total}.",
+        "en": "Showing {shown} of {total}.",
+        "de": "Zeige {shown} von {total}.",
+        "fr": "Affichage de {shown} sur {total}.",
+        "es": "Mostrando {shown} de {total}.",
+    },
+    "you_are_here": {
+        "it": "Sei qui", "en": "You are here", "de": "Du bist hier",
+        "fr": "Vous êtes ici", "es": "Estás aquí",
+    },
 }
 
 
