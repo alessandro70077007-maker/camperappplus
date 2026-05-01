@@ -41,6 +41,8 @@ def _default_db():
             "smtp_user": "",
             "smtp_pass": "",
             "nickname": "",
+            "auto_invio": False,
+            "ultimo_invio": "",
         },
     }
 
@@ -60,6 +62,13 @@ def load():
             db["impostazioni"].setdefault(k, v)
     # rimuovi chiavi obsolete da DB precedenti
     db.pop("chat_rooms", None)
+    # backfill campi nuovi sui record esistenti
+    for c in db.get("campers", []):
+        c.setdefault("km_iniziale", c.get("km", 0))
+    for r in db.get("rifornimenti", []):
+        r.setdefault("pieno", True)
+    for i in db.get("interventi", []):
+        i.setdefault("categoria", "altro")
     return db
 
 
@@ -83,6 +92,7 @@ def add_camper(marca, modello, anno, targa, km):
         "anno": anno,
         "targa": targa.upper(),
         "km": km,
+        "km_iniziale": km,
     })
     save(db)
     return new_id
@@ -93,6 +103,14 @@ def update_camper_km(camper_id, km):
     for c in db["campers"]:
         if c["id"] == camper_id:
             c["km"] = km
+    save(db)
+
+
+def update_camper_km_iniziale(camper_id, km_iniziale):
+    db = load()
+    for c in db["campers"]:
+        if c["id"] == camper_id:
+            c["km_iniziale"] = km_iniziale
     save(db)
 
 
@@ -134,7 +152,7 @@ def delete_scadenza(scadenza_id):
 
 
 # ---------- Interventi ----------
-def add_intervento(camper_id, data_intervento, descrizione, costo, km):
+def add_intervento(camper_id, data_intervento, descrizione, costo, km, categoria="altro"):
     db = load()
     new_id = _next_id(db["interventi"])
     db["interventi"].append({
@@ -144,6 +162,7 @@ def add_intervento(camper_id, data_intervento, descrizione, costo, km):
         "descrizione": descrizione,
         "costo": costo,
         "km": km,
+        "categoria": categoria,
     })
     save(db)
 
@@ -178,7 +197,7 @@ def delete_viaggio(viaggio_id):
 
 
 # ---------- Rifornimenti ----------
-def add_rifornimento(camper_id, data_rif, km, litri, costo, distributore, note):
+def add_rifornimento(camper_id, data_rif, km, litri, costo, distributore, note, pieno=True):
     db = load()
     new_id = _next_id(db["rifornimenti"])
     db["rifornimenti"].append({
@@ -190,6 +209,7 @@ def add_rifornimento(camper_id, data_rif, km, litri, costo, distributore, note):
         "costo": costo,
         "distributore": distributore,
         "note": note,
+        "pieno": pieno,
     })
     save(db)
 
