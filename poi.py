@@ -26,6 +26,7 @@ POI_TYPES = {
     "caravan_site": ("tourism=caravan_site", "poi_caravan_site", "#1f77b4"),
     "sanitary_dump": ("amenity=sanitary_dump_station", "poi_sanitary_dump", "#2ca02c"),
     "camp_site": ("tourism=camp_site", "poi_camp_site", "#d62728"),
+    "greenzone": ("tourism=picnic_site", "poi_greenzone", "#9467bd"),
 }
 
 
@@ -70,7 +71,7 @@ def _build_query(lat: float, lon: float, radius_m: int, types: tuple) -> str:
             for kind in ("node", "way", "relation"):
                 parts.append(f'{kind}["{k}"="{v}"](around:{radius_m},{lat},{lon});')
     body = "\n".join(parts)
-    return f"[out:json][timeout:25];(\n{body}\n);out center tags;"
+    return f"[out:json][timeout:50];(\n{body}\n);out center tags;"
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -100,6 +101,8 @@ def _normalize_element(el: dict, my_lat: float, my_lon: float) -> dict | None:
         poi_type = "sanitary_dump"
     elif tags.get("tourism") == "camp_site":
         poi_type = "camp_site"
+    elif tags.get("tourism") == "picnic_site":
+        poi_type = "greenzone"
     return {
         "id": el.get("id"),
         "type": poi_type,
@@ -128,7 +131,7 @@ def fetch_pois(lat: float, lon: float, radius_km: int, types: tuple) -> tuple[li
     last_err = None
     for endpoint in OVERPASS_ENDPOINTS:
         try:
-            resp = requests.post(endpoint, data={"data": query}, timeout=30)
+            resp = requests.post(endpoint, data={"data": query}, timeout=60)
             resp.raise_for_status()
             data = resp.json()
             elements = data.get("elements", [])

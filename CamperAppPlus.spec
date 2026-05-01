@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('app.py', '.'), ('storage.py', '.'), ('pdf_export.py', '.'), ('translations.py', '.'), ('backup.py', '.'), ('notifications.py', '.'), ('poi.py', '.')]
+datas = [('app.py', '.'), ('storage.py', '.'), ('pdf_export.py', '.'), ('translations.py', '.'), ('backup.py', '.'), ('notifications.py', '.'), ('poi.py', '.'), ('desktop_notif.py', '.'), ('weather.py', '.')]
 binaries = []
 hiddenimports = ['streamlit_geolocation', 'qrcode', 'email.mime.text', 'smtplib', 'requests', 'folium', 'streamlit_folium']
 tmp_ret = collect_all('streamlit')
