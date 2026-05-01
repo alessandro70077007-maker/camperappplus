@@ -32,4 +32,5 @@ dist/
 *.spec.bak
 
 # Bundle ZIP copiato nella landing per test locale (artefatto)
-landing/*.zip
+# Il ZIP vero va su GitHub Releases, non nel repo
+docs/*.zip
