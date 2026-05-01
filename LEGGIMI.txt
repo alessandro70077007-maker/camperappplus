@@ -1,0 +1,90 @@
+CAMPERappPLUS v1.0
+====================
+
+Grazie per aver provato CAMPERappPLUS. Questa app non si installa: si
+estrae e si lancia.
+
+
+COME AVVIARE L'APP
+------------------
+
+1. Estrai questa cartella (CamperAppPlus) dove vuoi sul tuo PC.
+   Esempio: Documenti\CamperAppPlus
+
+2. Apri la cartella estratta.
+
+3. Doppio click su  CamperAppPlus.exe
+
+4. Si aprira' una finestra Edge con l'app dentro.
+
+
+ATTENZIONE: AVVISO SMARTSCREEN AL PRIMO LANCIO
+----------------------------------------------
+
+Windows mostrera' un avviso blu del tipo "Windows ha protetto il PC".
+E' normale: l'app non e' firmata digitalmente (la firma costa centinaia
+di euro l'anno) ma e' sicura e completamente locale.
+
+Per procedere:
+- Clicca su "Ulteriori informazioni"
+- Clicca su "Esegui comunque" (in basso)
+
+Lo dovrai fare solo la prima volta.
+
+
+REQUISITI
+---------
+
+- Windows 10 o 11 (64 bit)
+- Microsoft Edge gia' installato (e' di serie su Windows)
+- Connessione Internet per: mappa aree sosta, meteo, geolocalizzazione
+  (tutto il resto funziona offline)
+
+
+DOVE VANNO I MIEI DATI?
+------------------------
+
+I tuoi dati e documenti vanno in:
+   %APPDATA%\CamperAppPlus\data
+
+(in genere: C:\Users\TUONOME\AppData\Roaming\CamperAppPlus\data)
+
+Questa cartella sopravvive ad aggiornamenti dell'app. Se cancelli la
+cartella estratta, i dati restano.
+
+Per backup completo (DB + documenti): Impostazioni -> Backup -> Esporta.
+Genera uno ZIP che puoi importare su un altro PC.
+
+
+COME CHIUDERE L'APP
+-------------------
+
+Chiudi la finestra Edge. L'app si fermera' automaticamente.
+Se la finestra Edge non si chiude, fai click destro sull'icona
+nella taskbar -> "Chiudi finestra".
+
+
+PROBLEMI COMUNI
+---------------
+
+* "L'app non si apre" / "Edge si apre ma la pagina e' bianca":
+  Riprova. La prima volta Streamlit ci puo' mettere 10-20 secondi
+  ad avviarsi. Se persiste, controlla che Edge sia installato.
+
+* "Le aree sosta non caricano":
+  Serve connessione internet. Controlla anche di aver dato il consenso
+  alla geolocalizzazione, oppure cerca per nome citta'.
+
+* "Il GPS dice che sono in un'altra citta'":
+  Su PC fisso senza GPS hardware, Edge usa l'IP per stimare la
+  posizione e puo' essere impreciso. Usa il campo "Cerca per nome
+  citta o luogo" nella pagina Mappa.
+
+
+FEEDBACK
+--------
+
+Bug, idee, richieste: alessandro7007@live.it
+
+
+Buon viaggio!

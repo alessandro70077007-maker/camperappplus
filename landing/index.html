@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="page_title">CAMPERappPLUS — Camper management for Windows</title>
+<meta name="description" data-i18n="page_desc" content="Desktop app for camper owners: deadlines, logbook, trips, fuel, parking sites, weather. Local data, total privacy, free.">
+<link rel="icon" href="icon.png">
+<style>
+:root {
+  --blu: #2d6ea5;
+  --blu-scuro: #1d4d76;
+  --giallo: #ffc846;
+  --rosso: #d62728;
+  --testo: #1a2230;
+  --testo-soft: #4a5568;
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --border: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--testo); background: var(--bg); line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* Language switcher */
+.lang-switcher {
+  position: fixed; top: 16px; right: 16px; z-index: 100;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+  border-radius: 999px; padding: 6px; display: flex; gap: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.lang-switcher button {
+  border: none; background: transparent; cursor: pointer;
+  padding: 6px 10px; border-radius: 999px; font-size: 18px;
+  transition: background 0.15s;
+}
+.lang-switcher button:hover { background: rgba(0,0,0,0.06); }
+.lang-switcher button.active { background: var(--blu); }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, var(--blu) 0%, var(--blu-scuro) 100%); color: white; padding: 80px 0 100px; text-align: center; }
+.hero img { width: 140px; height: 140px; border-radius: 28px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); margin-bottom: 24px; }
+.hero h1 { font-size: 56px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+.hero h1 .plus { color: var(--giallo); }
+.hero .tagline { font-size: 22px; opacity: 0.92; max-width: 700px; margin: 0 auto 40px; }
+.cta { display: inline-block; background: var(--giallo); color: var(--testo); font-weight: 700; font-size: 18px; padding: 16px 36px; border-radius: 12px; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+.cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
+.cta-meta { display: block; margin-top: 14px; font-size: 14px; opacity: 0.8; }
+
+/* Sections */
+section { padding: 80px 0; }
+.section-title { text-align: center; font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+.section-sub { text-align: center; font-size: 18px; color: var(--testo-soft); max-width: 700px; margin: 0 auto 56px; }
+
+/* Features */
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.feature { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; transition: transform 0.15s, box-shadow 0.15s; }
+.feature:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+.feature .icon { font-size: 36px; margin-bottom: 16px; display: block; }
+.feature h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.feature p { color: var(--testo-soft); font-size: 15px; }
+
+/* Privacy */
+.privacy { background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; text-align: center; }
+.privacy-item .icon { font-size: 40px; }
+.privacy-item h4 { font-size: 18px; font-weight: 700; margin: 12px 0 6px; }
+.privacy-item p { color: var(--testo-soft); font-size: 14px; }
+
+/* Install */
+.install { background: var(--bg); }
+.install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.install-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+.install-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.install-card ol, .install-card ul { margin-left: 22px; color: var(--testo-soft); }
+.install-card li { margin-bottom: 10px; font-size: 15px; }
+.note { background: #fff8db; border-left: 4px solid var(--giallo); padding: 16px 20px; border-radius: 8px; margin-top: 20px; font-size: 14px; color: var(--testo); }
+
+/* Footer */
+footer { background: var(--blu-scuro); color: rgba(255,255,255,0.85); padding: 40px 0; text-align: center; font-size: 14px; }
+footer a { color: var(--giallo); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .hero h1 { font-size: 38px; }
+  .hero .tagline { font-size: 18px; }
+  .install-grid { grid-template-columns: 1fr; }
+  section { padding: 56px 0; }
+  .lang-switcher { top: 8px; right: 8px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="lang-switcher" role="navigation" aria-label="Language">
+  <button data-set-lang="it" title="Italiano">🇮🇹</button>
+  <button data-set-lang="en" title="English">🇬🇧</button>
+  <button data-set-lang="de" title="Deutsch">🇩🇪</button>
+  <button data-set-lang="fr" title="Français">🇫🇷</button>
+  <button data-set-lang="es" title="Español">🇪🇸</button>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <img src="icon.png" alt="CAMPERappPLUS logo">
+    <h1>CAMPERapp<span class="plus">PLUS</span></h1>
+    <p class="tagline" data-i18n="tagline"></p>
+    <a href="CamperAppPlus_v1.0_windows.zip" class="cta" download>
+      <span data-i18n="cta">⬇️ Download for Windows (104 MB)</span>
+    </a>
+    <span class="cta-meta" data-i18n="cta_meta"></span>
+  </div>
+</header>
+
+<section>
+  <div class="container">
+    <h2 class="section-title" data-i18n="features_title"></h2>
+    <p class="section-sub" data-i18n="features_sub"></p>
+
+    <div class="features">
+      <div class="feature">
+        <span class="icon">⏰</span>
+        <h3 data-i18n="f_deadlines_title"></h3>
+        <p data-i18n="f_deadlines_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">🔧</span>
+        <h3 data-i18n="f_logbook_title"></h3>
+        <p data-i18n="f_logbook_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">📍</span>
+        <h3 data-i18n="f_pois_title"></h3>
+        <p data-i18n="f_pois_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">🌤️</span>
+        <h3 data-i18n="f_weather_title"></h3>
+        <p data-i18n="f_weather_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">⛽</span>
+        <h3 data-i18n="f_fuel_title"></h3>
+        <p data-i18n="f_fuel_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">🗺️</span>
+        <h3 data-i18n="f_trips_title"></h3>
+        <p data-i18n="f_trips_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">📎</span>
+        <h3 data-i18n="f_docs_title"></h3>
+        <p data-i18n="f_docs_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">✅</span>
+        <h3 data-i18n="f_checklist_title"></h3>
+        <p data-i18n="f_checklist_desc"></p>
+      </div>
+      <div class="feature">
+        <span class="icon">🌍</span>
+        <h3 data-i18n="f_lang_title"></h3>
+        <p data-i18n="f_lang_desc"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="privacy">
+  <div class="container">
+    <h2 class="section-title" data-i18n="privacy_title"></h2>
+    <p class="section-sub" data-i18n="privacy_sub"></p>
+
+    <div class="privacy-grid">
+      <div class="privacy-item">
+        <div class="icon">🔒</div>
+        <h4 data-i18n="p_local_title"></h4>
+        <p data-i18n="p_local_desc"></p>
+      </div>
+      <div class="privacy-item">
+        <div class="icon">📦</div>
+        <h4 data-i18n="p_backup_title"></h4>
+        <p data-i18n="p_backup_desc"></p>
+      </div>
+      <div class="privacy-item">
+        <div class="icon">🎁</div>
+        <h4 data-i18n="p_free_title"></h4>
+        <p data-i18n="p_free_desc"></p>
+      </div>
+      <div class="privacy-item">
+        <div class="icon">📡</div>
+        <h4 data-i18n="p_data_title"></h4>
+        <p data-i18n="p_data_desc"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="install">
+  <div class="container">
+    <h2 class="section-title" data-i18n="install_title"></h2>
+    <p class="section-sub" data-i18n="install_sub"></p>
+
+    <div class="install-grid">
+      <div class="install-card">
+        <h3 data-i18n="req_title"></h3>
+        <ul>
+          <li data-i18n="req_os"></li>
+          <li data-i18n="req_edge"></li>
+          <li data-i18n="req_disk"></li>
+          <li data-i18n="req_net"></li>
+        </ul>
+      </div>
+      <div class="install-card">
+        <h3 data-i18n="start_title"></h3>
+        <ol>
+          <li data-i18n="start_1"></li>
+          <li data-i18n="start_2"></li>
+          <li data-i18n="start_3"></li>
+        </ol>
+        <div class="note" data-i18n="smartscreen_note"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p><strong>CAMPERapp<span style="color:var(--giallo)">PLUS</span></strong> — <span data-i18n="footer_subtitle"></span></p>
+    <p style="margin-top:8px"><span data-i18n="footer_feedback"></span> <a href="mailto:alessandro7007@live.it">alessandro7007@live.it</a></p>
+    <p style="margin-top:18px; opacity:0.6; font-size:12px" data-i18n="footer_attribution"></p>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+  it: {
+    page_title: "CAMPERappPLUS — Gestione camper per Windows",
+    page_desc: "App desktop per camperisti: scadenze, libretto, viaggi, consumi, aree sosta, meteo. Dati locali, privacy totale, gratis.",
+    tagline: "L'app desktop per gestire il tuo camper: scadenze, libretto digitale, viaggi, consumi, aree sosta e meteo. Tutto in un unico posto, gratis.",
+    cta: "⬇️ Scarica per Windows (104 MB)",
+    cta_meta: "v1.0 · Windows 10/11 · Funziona offline (eccetto mappa e meteo)",
+    features_title: "Tutto quello che serve a un camperista",
+    features_sub: "Un'unica app per non dimenticare nulla — dalle scadenze alle aree sosta, dai consumi al meteo.",
+    f_deadlines_title: "Scadenze sotto controllo",
+    f_deadlines_desc: "Revisione, assicurazione, bollo, bombole, tagliando: avvisi automatici via email o notifica desktop quando una scadenza si avvicina.",
+    f_logbook_title: "Libretto digitale",
+    f_logbook_desc: "Storico interventi e manutenzione con categoria, costo e km. Esporta in PDF per il prossimo proprietario o la concessionaria.",
+    f_pois_title: "Aree sosta sulla mappa",
+    f_pois_desc: "Trova aree sosta, camper service, campeggi e aree verdi nelle vicinanze. Dati gratuiti da OpenStreetMap, mappa interattiva.",
+    f_weather_title: "Meteo integrato",
+    f_weather_desc: "Condizioni e previsioni a 5 giorni nella tua posizione attuale o in qualunque città cerchi per nome.",
+    f_fuel_title: "Consumi reali",
+    f_fuel_desc: "Inserisci i rifornimenti, ottieni l/100km accurati tra pieni completi. Statistiche per camper e nel tempo.",
+    f_trips_title: "Diario viaggi",
+    f_trips_desc: "Registra ogni viaggio con destinazione, km, spesa. Statistiche su totali e costo per km.",
+    f_docs_title: "Documenti sempre con te",
+    f_docs_desc: "Carica libretto, polizze, ricevute, foto. Tutto associato al camper giusto, niente più cartelle disordinate.",
+    f_checklist_title: "Checklist personalizzate",
+    f_checklist_desc: "Liste di controllo per partenza, apertura, chiusura, manutenzione. Ripristinabili a fine viaggio.",
+    f_lang_title: "5 lingue",
+    f_lang_desc: "Italiano, inglese, tedesco, francese, spagnolo. Cambia al volo dalle impostazioni.",
+    privacy_title: "I tuoi dati restano tuoi",
+    privacy_sub: "Nessun account, nessun cloud, nessun tracciamento. CAMPERappPLUS gira sul tuo PC.",
+    p_local_title: "100% locale",
+    p_local_desc: "Tutti i dati e i documenti vivono nel tuo PC, in %APPDATA%\\CamperAppPlus.",
+    p_backup_title: "Backup completo",
+    p_backup_desc: "Esporta tutto in un file ZIP (DB + allegati) per cambiare PC senza perdere nulla.",
+    p_free_title: "Gratis, niente account",
+    p_free_desc: "Nessuna registrazione, nessun abbonamento, nessuna pubblicità.",
+    p_data_title: "Solo dati pubblici online",
+    p_data_desc: "Connessione usata solo per meteo (Open-Meteo) e mappa (OpenStreetMap). I tuoi dati non vanno da nessuna parte.",
+    install_title: "Installazione in 3 passaggi",
+    install_sub: "Niente setup complicato: scarica, estrai, lancia.",
+    req_title: "📋 Requisiti",
+    req_os: "Windows 10 o 11 (64-bit)",
+    req_edge: "Microsoft Edge (incluso in Windows)",
+    req_disk: "~250 MB di spazio disco",
+    req_net: "Connessione Internet (solo per mappa e meteo)",
+    start_title: "🚀 Avvio",
+    start_1: "Scarica il file CamperAppPlus_v1.0_windows.zip",
+    start_2: "Click destro sullo zip → Estrai tutto",
+    start_3: "Apri la cartella estratta e fai doppio click su CamperAppPlus.exe",
+    smartscreen_note: "⚠️ Avviso SmartScreen: la prima volta Windows potrebbe mostrare \"Windows ha protetto il PC\". È normale per app non firmate. Clicca su Ulteriori informazioni → Esegui comunque.",
+    footer_subtitle: "un progetto indipendente per camperisti",
+    footer_feedback: "Feedback, bug, idee? Scrivimi a",
+    footer_attribution: "Mappa © OpenStreetMap contributors · Meteo © Open-Meteo",
+  },
+  en: {
+    page_title: "CAMPERappPLUS — Camper management for Windows",
+    page_desc: "Desktop app for camper owners: deadlines, logbook, trips, fuel, parking sites, weather. Local data, total privacy, free.",
+    tagline: "The desktop app to manage your camper: deadlines, digital logbook, trips, fuel, parking sites and weather. All in one place, free.",
+    cta: "⬇️ Download for Windows (104 MB)",
+    cta_meta: "v1.0 · Windows 10/11 · Works offline (except map and weather)",
+    features_title: "Everything a camper owner needs",
+    features_sub: "One app to never forget anything — from deadlines to parking sites, from fuel stats to weather.",
+    f_deadlines_title: "Deadlines under control",
+    f_deadlines_desc: "MOT, insurance, road tax, gas bottles, service: automatic email or desktop notifications when a deadline is coming.",
+    f_logbook_title: "Digital logbook",
+    f_logbook_desc: "Maintenance history with category, cost and km. Export to PDF for the next owner or workshop.",
+    f_pois_title: "Parking sites on the map",
+    f_pois_desc: "Find caravan sites, sanitary dump stations, campsites and green areas nearby. Free data from OpenStreetMap, interactive map.",
+    f_weather_title: "Built-in weather",
+    f_weather_desc: "Current conditions and 5-day forecast at your location or any city you search by name.",
+    f_fuel_title: "Real fuel stats",
+    f_fuel_desc: "Log refills, get accurate l/100km between full fillups. Per-camper and over-time statistics.",
+    f_trips_title: "Trip diary",
+    f_trips_desc: "Record every trip with destination, km, cost. Stats on totals and cost per km.",
+    f_docs_title: "Documents at hand",
+    f_docs_desc: "Upload registration, insurance, receipts, photos. All linked to the right camper — no more messy folders.",
+    f_checklist_title: "Custom checklists",
+    f_checklist_desc: "Lists for departure, setup, teardown, maintenance. Resettable at the end of each trip.",
+    f_lang_title: "5 languages",
+    f_lang_desc: "Italian, English, German, French, Spanish. Switch on the fly from settings.",
+    privacy_title: "Your data stays yours",
+    privacy_sub: "No account, no cloud, no tracking. CAMPERappPLUS runs on your PC.",
+    p_local_title: "100% local",
+    p_local_desc: "All data and documents live on your PC, in %APPDATA%\\CamperAppPlus.",
+    p_backup_title: "Full backup",
+    p_backup_desc: "Export everything to a ZIP (DB + attachments) to switch PC without losing anything.",
+    p_free_title: "Free, no account",
+    p_free_desc: "No signup, no subscription, no ads.",
+    p_data_title: "Only public data online",
+    p_data_desc: "Internet used only for weather (Open-Meteo) and map (OpenStreetMap). Your data goes nowhere.",
+    install_title: "Install in 3 steps",
+    install_sub: "No complicated setup: download, extract, launch.",
+    req_title: "📋 Requirements",
+    req_os: "Windows 10 or 11 (64-bit)",
+    req_edge: "Microsoft Edge (included with Windows)",
+    req_disk: "~250 MB disk space",
+    req_net: "Internet connection (only for map and weather)",
+    start_title: "🚀 Launch",
+    start_1: "Download the file CamperAppPlus_v1.0_windows.zip",
+    start_2: "Right-click the zip → Extract All",
+    start_3: "Open the extracted folder and double-click CamperAppPlus.exe",
+    smartscreen_note: "⚠️ SmartScreen warning: the first time Windows may show \"Windows protected your PC\". This is normal for unsigned apps. Click More info → Run anyway.",
+    footer_subtitle: "an independent project for camper owners",
+    footer_feedback: "Feedback, bugs, ideas? Email me at",
+    footer_attribution: "Map © OpenStreetMap contributors · Weather © Open-Meteo",
+  },
+  de: {
+    page_title: "CAMPERappPLUS — Wohnmobil-Verwaltung für Windows",
+    page_desc: "Desktop-App für Wohnmobilbesitzer: Fristen, Wartungsheft, Reisen, Verbrauch, Stellplätze, Wetter. Lokale Daten, volle Privatsphäre, kostenlos.",
+    tagline: "Die Desktop-App für dein Wohnmobil: Fristen, digitales Wartungsheft, Reisen, Verbrauch, Stellplätze und Wetter. Alles an einem Ort, kostenlos.",
+    cta: "⬇️ Für Windows herunterladen (104 MB)",
+    cta_meta: "v1.0 · Windows 10/11 · Offline-fähig (außer Karte und Wetter)",
+    features_title: "Alles, was ein Wohnmobilist braucht",
+    features_sub: "Eine App, um nichts zu vergessen — von Fristen über Stellplätze bis zu Verbrauch und Wetter.",
+    f_deadlines_title: "Fristen im Griff",
+    f_deadlines_desc: "HU, Versicherung, KFZ-Steuer, Gasflaschen, Inspektion: automatische E-Mail- oder Desktop-Benachrichtigungen bei näherkommenden Fristen.",
+    f_logbook_title: "Digitales Wartungsheft",
+    f_logbook_desc: "Wartungshistorie mit Kategorie, Kosten und km. PDF-Export für den nächsten Besitzer oder die Werkstatt.",
+    f_pois_title: "Stellplätze auf der Karte",
+    f_pois_desc: "Wohnmobilstellplätze, Entsorgungsstationen, Campingplätze und Grünflächen in der Nähe finden. Kostenlose OpenStreetMap-Daten.",
+    f_weather_title: "Integriertes Wetter",
+    f_weather_desc: "Aktuelle Bedingungen und 5-Tage-Vorhersage an deinem Standort oder in jeder gesuchten Stadt.",
+    f_fuel_title: "Echter Verbrauch",
+    f_fuel_desc: "Tankstopps eintragen, präzise l/100km zwischen Volltankungen erhalten. Statistiken pro Fahrzeug und über die Zeit.",
+    f_trips_title: "Reisetagebuch",
+    f_trips_desc: "Jede Reise mit Ziel, km, Kosten festhalten. Statistiken zu Gesamtwerten und Kosten pro km.",
+    f_docs_title: "Dokumente immer dabei",
+    f_docs_desc: "Lade Fahrzeugschein, Versicherung, Belege, Fotos hoch. Alles dem richtigen Wohnmobil zugeordnet, keine chaotischen Ordner mehr.",
+    f_checklist_title: "Eigene Checklisten",
+    f_checklist_desc: "Listen für Abfahrt, Aufbau, Abbau, Wartung. Am Ende jeder Reise zurücksetzbar.",
+    f_lang_title: "5 Sprachen",
+    f_lang_desc: "Italienisch, Englisch, Deutsch, Französisch, Spanisch. Direkt aus den Einstellungen umschalten.",
+    privacy_title: "Deine Daten bleiben dein",
+    privacy_sub: "Kein Konto, keine Cloud, kein Tracking. CAMPERappPLUS läuft auf deinem PC.",
+    p_local_title: "100% lokal",
+    p_local_desc: "Alle Daten und Dokumente leben auf deinem PC, in %APPDATA%\\CamperAppPlus.",
+    p_backup_title: "Komplettes Backup",
+    p_backup_desc: "Exportiere alles als ZIP (DB + Anhänge), um ohne Verlust den PC zu wechseln.",
+    p_free_title: "Kostenlos, kein Konto",
+    p_free_desc: "Keine Registrierung, kein Abo, keine Werbung.",
+    p_data_title: "Nur öffentliche Online-Daten",
+    p_data_desc: "Internet nur für Wetter (Open-Meteo) und Karte (OpenStreetMap). Deine Daten gehen nirgendwohin.",
+    install_title: "Installation in 3 Schritten",
+    install_sub: "Kein kompliziertes Setup: herunterladen, entpacken, starten.",
+    req_title: "📋 Voraussetzungen",
+    req_os: "Windows 10 oder 11 (64-Bit)",
+    req_edge: "Microsoft Edge (in Windows enthalten)",
+    req_disk: "~250 MB Speicherplatz",
+    req_net: "Internetverbindung (nur für Karte und Wetter)",
+    start_title: "🚀 Starten",
+    start_1: "Lade die Datei CamperAppPlus_v1.0_windows.zip herunter",
+    start_2: "Rechtsklick auf die ZIP → Alle entpacken",
+    start_3: "Öffne den entpackten Ordner und doppelklicke auf CamperAppPlus.exe",
+    smartscreen_note: "⚠️ SmartScreen-Warnung: Beim ersten Start zeigt Windows ggf. \"Der Computer wurde durch Windows geschützt\". Das ist normal bei unsignierten Apps. Klicke auf Weitere Informationen → Trotzdem ausführen.",
+    footer_subtitle: "ein unabhängiges Projekt für Wohnmobilbesitzer",
+    footer_feedback: "Feedback, Bugs, Ideen? Schreib mir an",
+    footer_attribution: "Karte © OpenStreetMap contributors · Wetter © Open-Meteo",
+  },
+  fr: {
+    page_title: "CAMPERappPLUS — Gestion de camping-car pour Windows",
+    page_desc: "Application bureau pour propriétaires de camping-car : échéances, carnet, voyages, carburant, aires, météo. Données locales, vie privée totale, gratuit.",
+    tagline: "L'application de bureau pour gérer votre camping-car : échéances, carnet d'entretien, voyages, carburant, aires et météo. Tout au même endroit, gratuit.",
+    cta: "⬇️ Télécharger pour Windows (104 Mo)",
+    cta_meta: "v1.0 · Windows 10/11 · Fonctionne hors-ligne (sauf carte et météo)",
+    features_title: "Tout ce qu'il faut à un camping-cariste",
+    features_sub: "Une seule app pour ne rien oublier — des échéances aux aires, du carburant à la météo.",
+    f_deadlines_title: "Échéances sous contrôle",
+    f_deadlines_desc: "Contrôle technique, assurance, taxe, bouteilles de gaz, révision : alertes automatiques par e-mail ou notification de bureau.",
+    f_logbook_title: "Carnet d'entretien numérique",
+    f_logbook_desc: "Historique des interventions avec catégorie, coût et km. Export PDF pour le prochain propriétaire ou le garage.",
+    f_pois_title: "Aires sur la carte",
+    f_pois_desc: "Trouvez aires camping-car, stations de vidange, campings et espaces verts à proximité. Données gratuites OpenStreetMap.",
+    f_weather_title: "Météo intégrée",
+    f_weather_desc: "Conditions et prévisions à 5 jours à votre position ou dans n'importe quelle ville recherchée.",
+    f_fuel_title: "Consommation réelle",
+    f_fuel_desc: "Enregistrez les pleins, obtenez des l/100km précis entre pleins complets. Statistiques par véhicule et dans le temps.",
+    f_trips_title: "Journal de voyage",
+    f_trips_desc: "Enregistrez chaque voyage avec destination, km, coût. Stats sur totaux et coût par km.",
+    f_docs_title: "Documents toujours avec vous",
+    f_docs_desc: "Téléchargez carte grise, assurance, reçus, photos. Tout associé au bon camping-car.",
+    f_checklist_title: "Listes personnalisées",
+    f_checklist_desc: "Listes pour le départ, l'installation, le rangement, l'entretien. Réinitialisables après chaque voyage.",
+    f_lang_title: "5 langues",
+    f_lang_desc: "Italien, anglais, allemand, français, espagnol. Changement immédiat dans les paramètres.",
+    privacy_title: "Vos données restent les vôtres",
+    privacy_sub: "Aucun compte, aucun cloud, aucun pistage. CAMPERappPLUS tourne sur votre PC.",
+    p_local_title: "100% local",
+    p_local_desc: "Toutes les données et documents vivent sur votre PC, dans %APPDATA%\\CamperAppPlus.",
+    p_backup_title: "Sauvegarde complète",
+    p_backup_desc: "Exportez tout en ZIP (BDD + pièces jointes) pour changer de PC sans rien perdre.",
+    p_free_title: "Gratuit, sans compte",
+    p_free_desc: "Aucune inscription, aucun abonnement, aucune publicité.",
+    p_data_title: "Uniquement des données publiques",
+    p_data_desc: "Internet utilisé uniquement pour la météo (Open-Meteo) et la carte (OpenStreetMap). Vos données ne vont nulle part.",
+    install_title: "Installation en 3 étapes",
+    install_sub: "Pas de configuration compliquée : télécharger, extraire, lancer.",
+    req_title: "📋 Prérequis",
+    req_os: "Windows 10 ou 11 (64 bits)",
+    req_edge: "Microsoft Edge (inclus avec Windows)",
+    req_disk: "~250 Mo d'espace disque",
+    req_net: "Connexion Internet (uniquement carte et météo)",
+    start_title: "🚀 Lancer",
+    start_1: "Téléchargez le fichier CamperAppPlus_v1.0_windows.zip",
+    start_2: "Clic droit sur le zip → Extraire tout",
+    start_3: "Ouvrez le dossier extrait et double-cliquez sur CamperAppPlus.exe",
+    smartscreen_note: "⚠️ Avertissement SmartScreen : la première fois, Windows peut afficher « Windows a protégé votre ordinateur ». C'est normal pour les apps non signées. Cliquez sur Informations complémentaires → Exécuter quand même.",
+    footer_subtitle: "un projet indépendant pour camping-caristes",
+    footer_feedback: "Retours, bugs, idées ? Écrivez-moi à",
+    footer_attribution: "Carte © OpenStreetMap contributors · Météo © Open-Meteo",
+  },
+  es: {
+    page_title: "CAMPERappPLUS — Gestión de autocaravana para Windows",
+    page_desc: "App de escritorio para propietarios de autocaravana: vencimientos, libro de mantenimiento, viajes, combustible, áreas, tiempo. Datos locales, privacidad total, gratis.",
+    tagline: "La app de escritorio para gestionar tu autocaravana: vencimientos, libro digital, viajes, combustible, áreas y tiempo. Todo en un solo lugar, gratis.",
+    cta: "⬇️ Descargar para Windows (104 MB)",
+    cta_meta: "v1.0 · Windows 10/11 · Funciona offline (excepto mapa y tiempo)",
+    features_title: "Todo lo que necesita un autocaravanista",
+    features_sub: "Una sola app para no olvidar nada — desde los vencimientos a las áreas, del combustible al tiempo.",
+    f_deadlines_title: "Vencimientos bajo control",
+    f_deadlines_desc: "ITV, seguro, impuesto, bombonas, mantenimiento: avisos automáticos por correo o notificación de escritorio cuando se acerca un vencimiento.",
+    f_logbook_title: "Libro digital",
+    f_logbook_desc: "Historial de intervenciones con categoría, coste y km. Exporta a PDF para el próximo propietario o el taller.",
+    f_pois_title: "Áreas en el mapa",
+    f_pois_desc: "Encuentra áreas de autocaravana, vaciado, campings y zonas verdes cercanas. Datos gratuitos de OpenStreetMap.",
+    f_weather_title: "Tiempo integrado",
+    f_weather_desc: "Condiciones actuales y previsión a 5 días en tu ubicación o en cualquier ciudad que busques.",
+    f_fuel_title: "Consumo real",
+    f_fuel_desc: "Registra repostajes, obtén l/100km precisos entre llenos completos. Estadísticas por vehículo y en el tiempo.",
+    f_trips_title: "Diario de viajes",
+    f_trips_desc: "Registra cada viaje con destino, km, gasto. Estadísticas sobre totales y coste por km.",
+    f_docs_title: "Documentos siempre contigo",
+    f_docs_desc: "Sube permiso, seguro, recibos, fotos. Todo asociado a la autocaravana correcta.",
+    f_checklist_title: "Listas personalizadas",
+    f_checklist_desc: "Listas para salida, montaje, desmontaje, mantenimiento. Reiniciables al final de cada viaje.",
+    f_lang_title: "5 idiomas",
+    f_lang_desc: "Italiano, inglés, alemán, francés, español. Cambio inmediato desde los ajustes.",
+    privacy_title: "Tus datos siguen siendo tuyos",
+    privacy_sub: "Sin cuenta, sin nube, sin seguimiento. CAMPERappPLUS corre en tu PC.",
+    p_local_title: "100% local",
+    p_local_desc: "Todos los datos y documentos viven en tu PC, en %APPDATA%\\CamperAppPlus.",
+    p_backup_title: "Copia completa",
+    p_backup_desc: "Exporta todo a ZIP (BD + adjuntos) para cambiar de PC sin perder nada.",
+    p_free_title: "Gratis, sin cuenta",
+    p_free_desc: "Sin registro, sin suscripción, sin anuncios.",
+    p_data_title: "Solo datos públicos online",
+    p_data_desc: "Internet solo para tiempo (Open-Meteo) y mapa (OpenStreetMap). Tus datos no van a ningún sitio.",
+    install_title: "Instalación en 3 pasos",
+    install_sub: "Sin configuración complicada: descargar, extraer, lanzar.",
+    req_title: "📋 Requisitos",
+    req_os: "Windows 10 u 11 (64 bits)",
+    req_edge: "Microsoft Edge (incluido en Windows)",
+    req_disk: "~250 MB de espacio en disco",
+    req_net: "Conexión a Internet (solo mapa y tiempo)",
+    start_title: "🚀 Lanzar",
+    start_1: "Descarga el archivo CamperAppPlus_v1.0_windows.zip",
+    start_2: "Clic derecho en el zip → Extraer todo",
+    start_3: "Abre la carpeta extraída y haz doble clic en CamperAppPlus.exe",
+    smartscreen_note: "⚠️ Aviso SmartScreen: la primera vez Windows puede mostrar \"Windows protegió su PC\". Es normal en apps sin firmar. Haz clic en Más información → Ejecutar de todos modos.",
+    footer_subtitle: "un proyecto independiente para autocaravanistas",
+    footer_feedback: "¿Comentarios, errores, ideas? Escríbeme a",
+    footer_attribution: "Mapa © OpenStreetMap contributors · Tiempo © Open-Meteo",
+  },
+};
+
+const SUPPORTED = ['it', 'en', 'de', 'fr', 'es'];
+
+function detectLang() {
+  const saved = localStorage.getItem('camperapp_lang');
+  if (saved && SUPPORTED.includes(saved)) return saved;
+  const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return SUPPORTED.includes(nav) ? nav : 'en';
+}
+
+function applyLang(lang) {
+  document.documentElement.lang = lang;
+  const dict = I18N[lang] || I18N.en;
+  // page title
+  if (dict.page_title) document.title = dict.page_title;
+  // meta description
+  const desc = document.querySelector('meta[name="description"]');
+  if (desc && dict.page_desc) desc.setAttribute('content', dict.page_desc);
+  // all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k] != null) el.textContent = dict[k];
+  });
+  // active button state
+  document.querySelectorAll('.lang-switcher button').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-set-lang') === lang);
+  });
+  localStorage.setItem('camperapp_lang', lang);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.lang-switcher button').forEach(b => {
+    b.addEventListener('click', () => applyLang(b.getAttribute('data-set-lang')));
+  });
+  applyLang(detectLang());
+});
+</script>
+
+</body>
+</html>

@@ -30,3 +30,6 @@ Thumbs.db
 build/
 dist/
 *.spec.bak
+
+# Bundle ZIP copiato nella landing per test locale (artefatto)
+landing/*.zip
