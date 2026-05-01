@@ -1,0 +1,864 @@
+"""CAMPERappPLUS — prototipo Streamlit.
+
+Gestione camper per proprietari: scadenze, libretto, viaggi, consumi e altro.
+"""
+import smtplib
+from email.mime.text import MIMEText
+from datetime import date, timedelta
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
+
+import storage
+from translations import t, LINGUE_DISPONIBILI
+
+st.set_page_config(page_title="CAMPERappPLUS", page_icon="🚐", layout="wide")
+
+# Lingua corrente (letta una volta dal DB)
+_db_init = storage.load()
+LANG = _db_init["impostazioni"].get("lingua", "it")
+
+
+def L(key, **kwargs):
+    return t(key, LANG, **kwargs)
+
+
+# ---------- Sidebar: navigazione ----------
+st.sidebar.title("🚐 CAMPERappPLUS")
+
+PAGES = [
+    ("home", L("page_home")),
+    ("campers", L("page_campers")),
+    ("deadlines", L("page_deadlines")),
+    ("logbook", L("page_logbook")),
+    ("trips", L("page_trips")),
+    ("map", L("page_map")),
+    ("fuel", L("page_fuel")),
+    ("checklist", L("page_checklist")),
+    ("documents", L("page_documents")),
+    ("stats", L("page_stats")),
+    ("settings", L("page_settings")),
+]
+labels = [p[1] for p in PAGES]
+codes = [p[0] for p in PAGES]
+# preserva pagina corrente attraverso cambio lingua (i label cambiano, i code no)
+default_code = st.session_state.get("pagina_code", "home")
+default_idx = codes.index(default_code) if default_code in codes else 0
+scelto = st.sidebar.radio(
+    L("section"), labels, index=default_idx, key=f"nav_{LANG}",
+)
+pagina = next(code for code, lbl in PAGES if lbl == scelto)
+st.session_state["pagina_code"] = pagina
+
+st.sidebar.markdown("---")
+st.sidebar.caption(L("sidebar_caption"))
+
+
+# ---------- Helper ----------
+def select_camper(key: str, label: str | None = None):
+    db = storage.load()
+    if not db["campers"]:
+        st.info(L("select_camper_first"))
+        return None, None
+    options = {f"{c['marca']} {c['modello']} ({c['targa']})": c["id"] for c in db["campers"]}
+    sel = st.selectbox(label or L("camper"), list(options.keys()), key=key)
+    return options[sel], sel
+
+
+def camper_label_map(db):
+    return {c["id"]: f"{c['marca']} {c['modello']}" for c in db["campers"]}
+
+
+def stato_scadenza(giorni, soglia):
+    if giorni < 0:
+        return "🔴 " + L("expired")
+    if giorni <= soglia:
+        return "🟠 " + L("upcoming")
+    return "🟢 " + L("ok")
+
+
+# tipi scadenza tradotti — chiave canonica salvata nel DB
+TIPI_SCADENZA_KEYS = ["tipo_revisione", "tipo_vignetta", "tipo_assicurazione",
+                      "tipo_bombole", "tipo_tagliando", "tipo_bollo", "tipo_altro"]
+TIPI_DOCUMENTI_KEYS = ["doc_libretto", "doc_assicurazione", "doc_revisione", "doc_bollo",
+                       "doc_ricevuta", "doc_manuale", "doc_foto", "doc_altro"]
+CHECKLIST_CAT_KEYS = ["cat_partenza", "cat_apertura", "cat_chiusura", "cat_manutenzione"]
+
+
+def tradotti(keys):
+    return [L(k) for k in keys]
+
+
+# ============================================================
+# PAGINA — Home / Dashboard
+# ============================================================
+if pagina == "home":
+    st.title(L("welcome"))
+
+    hero_path = Path(__file__).parent / "assets" / "hero.jpg"
+    if hero_path.exists():
+        st.image(str(hero_path), width="stretch")
+
+    db = storage.load()
+    soglia = db["impostazioni"]["giorni_promemoria"]
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric(L("campers"), len(db["campers"]))
+    c2.metric(L("deadlines"), len(db["scadenze"]))
+    c3.metric(L("interventions"), len(db["interventi"]))
+    c4.metric(L("trips"), len(db["viaggi"]))
+
+    st.markdown("---")
+
+    if not db["campers"]:
+        st.info(L("start_add_camper"))
+    else:
+        cmap = camper_label_map(db)
+
+        st.subheader(L("deadlines_within_days", n=soglia))
+        imminenti = []
+        for s in db["scadenze"]:
+            d = date.fromisoformat(s["data"])
+            giorni = (d - date.today()).days
+            if giorni <= soglia:
+                imminenti.append((giorni, s, d))
+        imminenti.sort(key=lambda x: x[0])
+        if not imminenti:
+            st.success(L("no_upcoming"))
+        else:
+            for giorni, s, d in imminenti:
+                stato = stato_scadenza(giorni, soglia)
+                msg = f"{stato} — **{s['tipo']}** ({cmap.get(s['camper_id'], '?')}) — {d.strftime('%d/%m/%Y')}"
+                when = L("expired_for_days", n=-giorni) if giorni < 0 else L("in_n_days", n=giorni)
+                if giorni < 0:
+                    st.error(f"{msg} · {when}")
+                else:
+                    st.warning(f"{msg} · {when}")
+
+        st.markdown("---")
+        st.subheader(L("total_costs_per_camper"))
+        rows_costi = []
+        for c in db["campers"]:
+            cid = c["id"]
+            tot_int = sum(i["costo"] for i in db["interventi"] if i["camper_id"] == cid)
+            tot_rif = sum(r["costo"] for r in db["rifornimenti"] if r["camper_id"] == cid)
+            tot_via = sum(v["costo"] for v in db["viaggi"] if v["camper_id"] == cid)
+            rows_costi.append({
+                L("camper"): f"{c['marca']} {c['modello']}",
+                L("maintenance"): tot_int,
+                L("fuel_label"): tot_rif,
+                L("trips_label"): tot_via,
+                L("total"): tot_int + tot_rif + tot_via,
+            })
+        if rows_costi:
+            df_costi = pd.DataFrame(rows_costi)
+            fmt_cols = [L("maintenance"), L("fuel_label"), L("trips_label"), L("total")]
+            st.dataframe(
+                df_costi.style.format({c: "€ {:.2f}" for c in fmt_cols}),
+                width="stretch", hide_index=True,
+            )
+
+
+# ============================================================
+# PAGINA — Camper
+# ============================================================
+elif pagina == "campers":
+    st.title(L("my_campers"))
+    db = storage.load()
+
+    with st.expander(L("add_camper"), expanded=not db["campers"]):
+        with st.form("nuovo_camper", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                marca = st.text_input(L("brand"))
+                anno = st.number_input(L("year"), min_value=1980, max_value=date.today().year, value=2018)
+            with col2:
+                modello = st.text_input(L("model"))
+                targa = st.text_input(L("plate"))
+            km = st.number_input(L("current_km"), min_value=0, value=50000, step=1000)
+
+            if st.form_submit_button(L("save_camper")):
+                if not (marca and modello and targa):
+                    st.error(L("fill_required"))
+                else:
+                    storage.add_camper(marca, modello, int(anno), targa, int(km))
+                    st.success(L("camper_added", name=f"{marca} {modello}"))
+                    st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("my_fleet"))
+    if not db["campers"]:
+        st.write(L("no_camper_yet"))
+    else:
+        for c in db["campers"]:
+            with st.container(border=True):
+                col1, col2, col3 = st.columns([4, 2, 1])
+                with col1:
+                    st.markdown(
+                        f"**{c['marca']} {c['modello']}** — {c['anno']} · "
+                        f"`{c['targa']}` · {c['km']:,} km".replace(",", ".")
+                    )
+                with col2:
+                    nuovo_km = st.number_input(
+                        L("update_km"), min_value=0, value=int(c["km"]),
+                        step=500, key=f"km_{c['id']}",
+                    )
+                    if nuovo_km != c["km"]:
+                        if st.button("💾", key=f"savekm_{c['id']}", help=L("save_new_km")):
+                            storage.update_camper_km(c["id"], int(nuovo_km))
+                            st.rerun()
+                with col3:
+                    if st.button("🗑️ " + L("delete"), key=f"del_{c['id']}"):
+                        storage.delete_camper(c["id"])
+                        st.rerun()
+
+
+# ============================================================
+# PAGINA — Scadenze
+# ============================================================
+elif pagina == "deadlines":
+    st.title(L("deadlines"))
+    db = storage.load()
+    soglia = db["impostazioni"]["giorni_promemoria"]
+
+    tipi_labels = tradotti(TIPI_SCADENZA_KEYS)
+
+    with st.expander(L("add_deadline"), expanded=not db["scadenze"]):
+        with st.form("nuova_scadenza", clear_on_submit=True):
+            cid, _ = select_camper("scad_camper")
+            tipo = st.selectbox(L("type"), tipi_labels)
+            data_scad = st.date_input(L("deadline_date"), value=date.today() + timedelta(days=30))
+            note = st.text_input(L("notes_optional"))
+            if st.form_submit_button(L("save_deadline")):
+                if cid is None:
+                    st.error(L("select_camper_error"))
+                else:
+                    storage.add_scadenza(cid, tipo, data_scad, note)
+                    st.success(L("deadline_added"))
+                    st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("upcoming_deadlines"))
+
+    if not db["scadenze"]:
+        st.write(L("no_deadline"))
+    else:
+        cmap = camper_label_map(db)
+        rows = []
+        for s in db["scadenze"]:
+            d = date.fromisoformat(s["data"])
+            giorni = (d - date.today()).days
+            rows.append({
+                L("status"): stato_scadenza(giorni, soglia),
+                L("camper"): cmap.get(s["camper_id"], "?"),
+                L("type"): s["tipo"],
+                L("date"): d.strftime("%d/%m/%Y"),
+                L("days"): giorni,
+                L("notes"): s["note"] or "",
+                "_id": s["id"],
+            })
+        rows.sort(key=lambda r: r[L("days")])
+        df = pd.DataFrame(rows).drop(columns=["_id"])
+        st.dataframe(df, width="stretch", hide_index=True)
+
+        with st.expander(L("delete_deadline_section")):
+            for r in rows:
+                if st.button(f"🗑️ {r[L('camper')]} — {r[L('type')]} ({r[L('date')]})", key=f"dels_{r['_id']}"):
+                    storage.delete_scadenza(r["_id"])
+                    st.rerun()
+
+
+# ============================================================
+# PAGINA — Libretto
+# ============================================================
+elif pagina == "logbook":
+    st.title(L("page_logbook").split(" ", 1)[1])
+    db = storage.load()
+
+    with st.expander(L("add_intervention"), expanded=not db["interventi"]):
+        with st.form("nuovo_intervento", clear_on_submit=True):
+            cid, _ = select_camper("int_camper")
+            col1, col2 = st.columns(2)
+            with col1:
+                data_int = st.date_input(L("date"), value=date.today())
+                km = st.number_input(L("km"), min_value=0, value=0, step=1000)
+            with col2:
+                costo = st.number_input(L("cost_eur"), min_value=0.0, value=0.0, step=10.0, format="%.2f")
+            descrizione = st.text_area(L("intervention_desc"))
+            if st.form_submit_button(L("save_intervention")):
+                if cid is None:
+                    st.error(L("select_camper_error"))
+                elif not descrizione:
+                    st.error(L("fill_description"))
+                else:
+                    storage.add_intervento(cid, data_int, descrizione, float(costo), int(km))
+                    st.success(L("intervention_saved"))
+                    st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("history_interventions"))
+
+    if not db["interventi"]:
+        st.write(L("no_intervention"))
+    else:
+        cmap = camper_label_map(db)
+        rows = [{
+            L("date"): date.fromisoformat(i["data"]).strftime("%d/%m/%Y"),
+            L("camper"): cmap.get(i["camper_id"], "?"),
+            L("description"): i["descrizione"],
+            L("km"): f"{i['km']:,}".replace(",", "."),
+            L("cost"): f"€ {i['costo']:.2f}",
+            "_id": i["id"],
+        } for i in sorted(db["interventi"], key=lambda x: x["data"], reverse=True)]
+        df = pd.DataFrame(rows).drop(columns=["_id"])
+        st.dataframe(df, width="stretch", hide_index=True)
+
+        totale = sum(i["costo"] for i in db["interventi"])
+        st.metric(L("total_maintenance"), f"€ {totale:,.2f}".replace(",", "."))
+
+        st.markdown("---")
+        st.subheader(L("export_pdf_logbook"))
+        col_a, col_b = st.columns(2)
+        with col_a:
+            cid_exp, label_exp = select_camper("pdf_camper", L("camper_to_export"))
+        with col_b:
+            if cid_exp is not None:
+                from pdf_export import build_libretto_pdf
+                pdf_bytes = build_libretto_pdf(db, cid_exp, LANG)
+                st.download_button(
+                    L("download_pdf"),
+                    data=pdf_bytes,
+                    file_name=f"libretto_{label_exp.replace(' ', '_')}.pdf",
+                    mime="application/pdf",
+                )
+
+        with st.expander(L("delete_intervention_section")):
+            for r in rows:
+                if st.button(f"🗑️ {r[L('camper')]} — {r[L('description')][:40]} ({r[L('date')]})", key=f"deli_{r['_id']}"):
+                    storage.delete_intervento(r["_id"])
+                    st.rerun()
+
+
+# ============================================================
+# PAGINA — Viaggi
+# ============================================================
+elif pagina == "trips":
+    st.title(L("trip_diary_title"))
+    db = storage.load()
+
+    with st.expander(L("add_trip"), expanded=not db["viaggi"]):
+        with st.form("nuovo_viaggio", clear_on_submit=True):
+            cid, _ = select_camper("via_camper")
+            col1, col2 = st.columns(2)
+            with col1:
+                data_inizio = st.date_input(L("departure_date"), value=date.today())
+                destinazione = st.text_input(L("destination"))
+                km_perc = st.number_input(L("km_done"), min_value=0, value=0, step=50)
+            with col2:
+                data_fine = st.date_input(L("return_date"), value=date.today() + timedelta(days=3))
+                costo = st.number_input(L("total_cost_eur"), min_value=0.0, value=0.0, step=10.0, format="%.2f")
+            note = st.text_area(L("notes"))
+            if st.form_submit_button(L("save_trip")):
+                if cid is None:
+                    st.error(L("select_camper_error"))
+                elif not destinazione:
+                    st.error(L("fill_destination"))
+                elif data_fine < data_inizio:
+                    st.error(L("return_before_departure"))
+                else:
+                    storage.add_viaggio(cid, data_inizio, data_fine, destinazione,
+                                        int(km_perc), float(costo), note)
+                    st.success(L("trip_saved"))
+                    st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("my_trips"))
+
+    if not db["viaggi"]:
+        st.write(L("no_trip"))
+    else:
+        cmap = camper_label_map(db)
+        rows = []
+        for v in sorted(db["viaggi"], key=lambda x: x["data_inizio"], reverse=True):
+            di = date.fromisoformat(v["data_inizio"])
+            df_ = date.fromisoformat(v["data_fine"])
+            durata = (df_ - di).days + 1
+            rows.append({
+                L("camper"): cmap.get(v["camper_id"], "?"),
+                L("destination"): v["destinazione"],
+                L("from"): di.strftime("%d/%m/%Y"),
+                L("to"): df_.strftime("%d/%m/%Y"),
+                L("days"): durata,
+                L("km"): f"{v['km_percorsi']:,}".replace(",", "."),
+                L("cost"): f"€ {v['costo']:.2f}",
+                L("notes"): v["note"] or "",
+                "_id": v["id"],
+            })
+        df = pd.DataFrame(rows).drop(columns=["_id"])
+        st.dataframe(df, width="stretch", hide_index=True)
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric(L("total_trips"), len(db["viaggi"]))
+        c2.metric(L("total_km"), f"{sum(v['km_percorsi'] for v in db['viaggi']):,}".replace(",", "."))
+        c3.metric(L("total_trip_spending"), f"€ {sum(v['costo'] for v in db['viaggi']):,.2f}".replace(",", "."))
+
+        with st.expander(L("delete_trip_section")):
+            for r in rows:
+                if st.button(f"🗑️ {r[L('camper')]} — {r[L('destination')]} ({r[L('from')]})", key=f"delv_{r['_id']}"):
+                    storage.delete_viaggio(r["_id"])
+                    st.rerun()
+
+# ============================================================
+# PAGINA — Mappa live
+# ============================================================
+elif pagina == "map":
+    st.title(L("map_title"))
+    st.caption(L("map_caption"))
+
+    from streamlit_geolocation import streamlit_geolocation
+
+    location = streamlit_geolocation()
+
+    lat = lon = None
+    accuracy = altitude = speed = None
+    if isinstance(location, dict):
+        lat = location.get("latitude")
+        lon = location.get("longitude")
+        accuracy = location.get("accuracy")
+        altitude = location.get("altitude")
+        speed = location.get("speed")
+
+    has_pos = lat is not None and lon is not None
+
+    if not has_pos:
+        st.info(L("click_locate"))
+        st.markdown(
+            f"### [{L('open_gmaps_direct')}](https://www.google.com/maps)"
+        )
+    else:
+        cols = st.columns(4)
+        cols[0].metric(L("latitude"), f"{lat:.5f}")
+        cols[1].metric(L("longitude"), f"{lon:.5f}")
+        cols[2].metric(L("accuracy_m"), f"{accuracy:.0f}" if accuracy else "—")
+        if speed is not None:
+            cols[3].metric(L("speed_kmh"), f"{speed * 3.6:.1f}")
+        elif altitude is not None:
+            cols[3].metric(L("altitude_m"), f"{altitude:.0f}")
+
+        gmaps_url = f"https://www.google.com/maps?q={lat},{lon}"
+        st.markdown(f"### [{L('open_in_gmaps')}]({gmaps_url})")
+        st.caption(L("gmaps_more_precise"))
+
+
+# ============================================================
+# PAGINA — Rifornimenti
+# ============================================================
+elif pagina == "fuel":
+    st.title(L("fuel_title"))
+    db = storage.load()
+
+    with st.expander(L("add_fuel"), expanded=not db["rifornimenti"]):
+        with st.form("nuovo_rifornimento", clear_on_submit=True):
+            cid, _ = select_camper("rif_camper")
+            col1, col2 = st.columns(2)
+            with col1:
+                data_rif = st.date_input(L("date"), value=date.today())
+                km = st.number_input(L("odometer_km"), min_value=0, value=0, step=100)
+                litri = st.number_input(L("liters"), min_value=0.0, value=0.0, step=1.0, format="%.2f")
+            with col2:
+                costo = st.number_input(L("total_cost_eur"), min_value=0.0, value=0.0, step=1.0, format="%.2f")
+                distributore = st.text_input(L("station"))
+            note = st.text_input(L("notes_optional"))
+            if st.form_submit_button(L("save_fuel")):
+                if cid is None:
+                    st.error(L("select_camper_error"))
+                elif litri <= 0 or km <= 0:
+                    st.error(L("fill_km_liters"))
+                else:
+                    storage.add_rifornimento(cid, data_rif, int(km), float(litri),
+                                             float(costo), distributore, note)
+                    st.success(L("fuel_saved"))
+                    st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("fuel_history"))
+
+    if not db["rifornimenti"]:
+        st.write(L("no_fuel"))
+    else:
+        cmap = camper_label_map(db)
+        rows = []
+        for c in db["campers"]:
+            rifs = sorted(
+                [r for r in db["rifornimenti"] if r["camper_id"] == c["id"]],
+                key=lambda x: x["km"],
+            )
+            prev_km = None
+            for r in rifs:
+                if prev_km is not None and r["km"] > prev_km and r["litri"] > 0:
+                    delta_km = r["km"] - prev_km
+                    consumo_str = f"{(r['litri'] / delta_km) * 100:.1f}"
+                else:
+                    consumo_str = "—"
+                prezzo_l = r["costo"] / r["litri"] if r["litri"] > 0 else 0
+                rows.append({
+                    L("date"): date.fromisoformat(r["data"]).strftime("%d/%m/%Y"),
+                    L("camper"): cmap.get(r["camper_id"], "?"),
+                    L("km"): f"{r['km']:,}".replace(",", "."),
+                    L("liters"): f"{r['litri']:.2f}",
+                    "€/L": f"{prezzo_l:.3f}",
+                    L("cost"): f"€ {r['costo']:.2f}",
+                    L("station"): r["distributore"] or "",
+                    L("consumption_l100"): consumo_str,
+                    "_id": r["id"],
+                    "_data": r["data"],
+                })
+                prev_km = r["km"]
+        rows.sort(key=lambda x: x["_data"], reverse=True)
+        df = pd.DataFrame(rows).drop(columns=["_id", "_data"])
+        st.dataframe(df, width="stretch", hide_index=True)
+
+        st.markdown(f"**{L('avg_consumption')}**")
+        for c in db["campers"]:
+            rifs = sorted(
+                [r for r in db["rifornimenti"] if r["camper_id"] == c["id"]],
+                key=lambda x: x["km"],
+            )
+            if len(rifs) >= 2:
+                tot_litri = sum(r["litri"] for r in rifs[1:])
+                tot_km = rifs[-1]["km"] - rifs[0]["km"]
+                if tot_km > 0:
+                    medio = (tot_litri / tot_km) * 100
+                    st.write(f"- {c['marca']} {c['modello']}: **{medio:.1f} l/100km** ({tot_km:,} km)".replace(",", "."))
+
+        with st.expander(L("delete_fuel_section")):
+            for r in rows:
+                if st.button(f"🗑️ {r[L('camper')]} — {r[L('date')]} ({r[L('liters')]}L)", key=f"delr_{r['_id']}"):
+                    storage.delete_rifornimento(r["_id"])
+                    st.rerun()
+
+
+# ============================================================
+# PAGINA — Checklist
+# ============================================================
+elif pagina == "checklist":
+    st.title(L("checklist_title"))
+    db = storage.load()
+
+    if not db["campers"]:
+        st.info(L("select_camper_first"))
+    else:
+        cid, _ = select_camper("chk_camper")
+        cat_labels = tradotti(CHECKLIST_CAT_KEYS)
+        categoria = st.radio(L("category"), cat_labels, horizontal=True)
+
+        with st.form("nuova_voce_chk", clear_on_submit=True):
+            voce = st.text_input(L("new_item"))
+            if st.form_submit_button("➕ " + L("add")):
+                if voce:
+                    storage.add_checklist_voce(cid, voce, categoria)
+                    st.rerun()
+
+        st.markdown("---")
+        voci = [v for v in db["checklist"] if v["camper_id"] == cid and v["categoria"] == categoria]
+        if not voci:
+            st.write(L("no_item_for_category", cat=categoria))
+        else:
+            fatte = sum(1 for v in voci if v["fatto"])
+            st.progress(fatte / len(voci) if voci else 0,
+                        text=L("n_completed", done=fatte, total=len(voci)))
+            for v in voci:
+                col1, col2 = st.columns([8, 1])
+                with col1:
+                    nuovo = st.checkbox(v["voce"], value=v["fatto"], key=f"chk_{v['id']}")
+                    if nuovo != v["fatto"]:
+                        storage.toggle_checklist_voce(v["id"])
+                        st.rerun()
+                with col2:
+                    if st.button("🗑️", key=f"delchk_{v['id']}"):
+                        storage.delete_checklist_voce(v["id"])
+                        st.rerun()
+            if st.button(L("reset_category"), key="reset_chk"):
+                storage.reset_checklist(cid, categoria)
+                st.rerun()
+
+
+# ============================================================
+# PAGINA — Documenti
+# ============================================================
+elif pagina == "documents":
+    st.title(L("documents_title"))
+    db = storage.load()
+
+    doc_types = tradotti(TIPI_DOCUMENTI_KEYS)
+
+    with st.expander(L("upload_document"), expanded=not db["documenti"]):
+        with st.form("nuovo_doc", clear_on_submit=True):
+            cid, _ = select_camper("doc_camper")
+            tipo = st.selectbox(L("doc_type"), doc_types)
+            file = st.file_uploader(L("file"), type=None)
+            note = st.text_input(L("notes_optional"))
+            if st.form_submit_button(L("upload")):
+                if cid is None:
+                    st.error(L("select_camper_error"))
+                elif file is None:
+                    st.error(L("select_file"))
+                else:
+                    storage.add_documento(cid, tipo, file.name, file.getvalue(), note)
+                    st.success(L("doc_uploaded", name=file.name))
+                    st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("documents_archive"))
+
+    if not db["documenti"]:
+        st.write(L("no_document"))
+    else:
+        cmap = camper_label_map(db)
+        for d in sorted(db["documenti"], key=lambda x: x["data_caricamento"], reverse=True):
+            with st.container(border=True):
+                col1, col2, col3 = st.columns([4, 2, 1])
+                with col1:
+                    note_part = f" · {d['note']}" if d['note'] else ""
+                    st.markdown(
+                        f"**{d['tipo']}** — {d['nome_originale']}  \n"
+                        f"_{cmap.get(d['camper_id'], '?')}_ · {L('uploaded_on')} "
+                        f"{date.fromisoformat(d['data_caricamento']).strftime('%d/%m/%Y')}"
+                        f"{note_part}"
+                    )
+                with col2:
+                    path = storage.documento_path(d)
+                    if path.exists():
+                        st.download_button(
+                            L("download"),
+                            data=path.read_bytes(),
+                            file_name=d["nome_originale"],
+                            key=f"dl_{d['id']}",
+                        )
+                with col3:
+                    if st.button("🗑️", key=f"deld_{d['id']}"):
+                        storage.delete_documento(d["id"])
+                        st.rerun()
+
+
+# ============================================================
+# PAGINA — Statistiche
+# ============================================================
+elif pagina == "stats":
+    st.title(L("stats_title"))
+    db = storage.load()
+
+    if not db["campers"]:
+        st.info(L("select_camper_first"))
+    else:
+        scelta = st.selectbox(
+            L("camper"),
+            [L("all_campers")] + [f"{c['marca']} {c['modello']}" for c in db["campers"]],
+        )
+        if scelta == L("all_campers"):
+            filtro_cid = None
+        else:
+            filtro_cid = next(c["id"] for c in db["campers"]
+                              if f"{c['marca']} {c['modello']}" == scelta)
+
+        def filtra(coll):
+            if filtro_cid is None:
+                return coll
+            return [x for x in coll if x["camper_id"] == filtro_cid]
+
+        st.subheader(L("monthly_costs"))
+        eventi = []
+        for i in filtra(db["interventi"]):
+            eventi.append({"data": i["data"], "categoria": L("maintenance"), "costo": i["costo"]})
+        for r in filtra(db["rifornimenti"]):
+            eventi.append({"data": r["data"], "categoria": L("fuel_label"), "costo": r["costo"]})
+        for v in filtra(db["viaggi"]):
+            eventi.append({"data": v["data_inizio"], "categoria": L("trips_label"), "costo": v["costo"]})
+
+        if not eventi:
+            st.write(L("no_spending_data"))
+        else:
+            df_e = pd.DataFrame(eventi)
+            df_e["mese"] = pd.to_datetime(df_e["data"]).dt.to_period("M").astype(str)
+            piv = df_e.pivot_table(
+                index="mese", columns="categoria", values="costo",
+                aggfunc="sum", fill_value=0,
+            ).sort_index()
+            st.bar_chart(piv)
+
+        st.markdown("---")
+        st.subheader(L("maintenance_breakdown"))
+        ints = filtra(db["interventi"])
+        if not ints:
+            st.write(L("no_intervention_short"))
+        else:
+            df_i = pd.DataFrame(ints)
+            df_i["categoria"] = df_i["descrizione"].str.split().str[0].str.title()
+            agg = df_i.groupby("categoria")["costo"].sum().sort_values(ascending=False)
+            st.bar_chart(agg)
+
+        st.markdown("---")
+        st.subheader(L("consumption_trend"))
+        rifs = filtra(db["rifornimenti"])
+        if filtro_cid is None:
+            st.caption(L("select_single_camper"))
+        elif len(rifs) < 2:
+            st.write(L("need_two_refills"))
+        else:
+            rifs_s = sorted(rifs, key=lambda x: x["km"])
+            punti = []
+            for prec, succ in zip(rifs_s, rifs_s[1:]):
+                delta = succ["km"] - prec["km"]
+                if delta > 0 and succ["litri"] > 0:
+                    punti.append({
+                        "data": succ["data"],
+                        "l/100km": (succ["litri"] / delta) * 100,
+                    })
+            if punti:
+                df_c = pd.DataFrame(punti)
+                df_c["data"] = pd.to_datetime(df_c["data"])
+                df_c = df_c.set_index("data")
+                st.line_chart(df_c)
+
+
+# ============================================================
+# PAGINA — Impostazioni
+# ============================================================
+elif pagina == "settings":
+    st.title(L("settings_title"))
+    db = storage.load()
+    imp = db["impostazioni"]
+
+    # ----- QR per aprire l'app su telefono -----
+    st.subheader(L("phone_section"))
+
+    import socket
+    import io
+    import qrcode
+
+    def _detect_local_ip():
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0.5)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except Exception:
+            return None
+
+    local_ip = _detect_local_ip()
+    if local_ip is None:
+        st.warning(L("phone_no_network"))
+    else:
+        url = f"http://{local_ip}:8501"
+        st.caption(L("phone_help"))
+        col_qr, col_info = st.columns([1, 2])
+        with col_qr:
+            img = qrcode.make(url)
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            st.image(buf.getvalue(), width=220)
+        with col_info:
+            st.code(url, language=None)
+            st.caption(L("phone_geo_warning"))
+
+    st.markdown("---")
+
+    # ----- LINGUA -----
+    st.subheader("🌍 " + L("language"))
+    codici = list(LINGUE_DISPONIBILI.keys())
+    etichette = [LINGUE_DISPONIBILI[c] for c in codici]
+    indice_corrente = codici.index(LANG) if LANG in codici else 0
+    nuova_lingua_label = st.selectbox(
+        L("language"), etichette, index=indice_corrente, key=f"lang_select_{LANG}",
+    )
+    nuova_lingua_code = codici[etichette.index(nuova_lingua_label)]
+    if nuova_lingua_code != LANG:
+        if st.button("💾 " + L("save")):
+            storage.update_impostazioni(lingua=nuova_lingua_code)
+            st.success(L("language_saved"))
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader("💬 " + L("nickname"))
+    cur_nick = imp.get("nickname", "")
+    new_nick = st.text_input(L("nickname"), value=cur_nick, max_chars=24, key="set_nick")
+    if new_nick.strip() and new_nick.strip() != cur_nick:
+        if st.button("💾 " + L("save_nickname"), key="save_nick_btn"):
+            storage.update_impostazioni(nickname=new_nick.strip())
+            st.success(L("nickname_saved"))
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("reminder_section"))
+    soglia = st.number_input(
+        L("days_before"),
+        min_value=1, max_value=365, value=int(imp.get("giorni_promemoria", 30)),
+    )
+    if soglia != imp.get("giorni_promemoria"):
+        if st.button(L("save_threshold")):
+            storage.update_impostazioni(giorni_promemoria=int(soglia))
+            st.success(L("saved"))
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("email_section"))
+    st.caption(L("email_help"))
+    with st.form("smtp_form"):
+        email = st.text_input(L("email_dest"), value=imp.get("email", ""))
+        col1, col2 = st.columns(2)
+        with col1:
+            smtp_host = st.text_input("SMTP host", value=imp.get("smtp_host", ""))
+            smtp_user = st.text_input("SMTP user", value=imp.get("smtp_user", ""))
+        with col2:
+            smtp_port = st.number_input("SMTP port", min_value=1, max_value=65535, value=int(imp.get("smtp_port", 587)))
+            smtp_pass = st.text_input("SMTP password", value=imp.get("smtp_pass", ""), type="password")
+        if st.form_submit_button(L("save_email_config")):
+            storage.update_impostazioni(
+                email=email, smtp_host=smtp_host, smtp_port=int(smtp_port),
+                smtp_user=smtp_user, smtp_pass=smtp_pass,
+            )
+            st.success(L("config_saved"))
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader(L("send_reminders_now"))
+    if not imp.get("email") or not imp.get("smtp_host"):
+        st.info(L("configure_email_first"))
+    else:
+        cmap = camper_label_map(db)
+        soglia_v = imp.get("giorni_promemoria", 30)
+        imminenti = []
+        for s in db["scadenze"]:
+            d = date.fromisoformat(s["data"])
+            giorni = (d - date.today()).days
+            if giorni <= soglia_v:
+                imminenti.append((giorni, s, d))
+        if not imminenti:
+            st.success(L("no_upcoming_to_notify"))
+        else:
+            st.write(L("found_n_deadlines", n=len(imminenti), days=soglia_v))
+            if st.button(L("send_now")):
+                imminenti.sort(key=lambda x: x[0])
+                righe = []
+                for giorni, s, d in imminenti:
+                    when = L("expired") if giorni < 0 else L("in_n_days", n=giorni)
+                    righe.append(
+                        f"- {s['tipo']} ({cmap.get(s['camper_id'], '?')}) "
+                        f"— {d.strftime('%d/%m/%Y')} ({when})"
+                    )
+                body = L("email_intro") + "\n".join(righe)
+                msg = MIMEText(body)
+                msg["Subject"] = L("email_subject", n=len(imminenti))
+                msg["From"] = imp["smtp_user"]
+                msg["To"] = imp["email"]
+                try:
+                    with smtplib.SMTP(imp["smtp_host"], int(imp["smtp_port"])) as srv:
+                        srv.starttls()
+                        srv.login(imp["smtp_user"], imp["smtp_pass"])
+                        srv.send_message(msg)
+                    st.success(L("email_sent_to", to=imp["email"]))
+                except Exception as e:
+                    st.error(L("send_error", err=e))
