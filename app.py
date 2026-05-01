@@ -11,7 +11,12 @@ import streamlit as st
 import storage
 from translations import t, LINGUE_DISPONIBILI
 
-st.set_page_config(page_title="CAMPERappPLUS", page_icon="🚐", layout="wide")
+_ICON_PATH = Path(__file__).parent / "icon.png"
+st.set_page_config(
+    page_title="CAMPERappPLUS",
+    page_icon=str(_ICON_PATH) if _ICON_PATH.exists() else "🚐",
+    layout="wide",
+)
 
 # Lingua corrente (letta una volta dal DB)
 _db_init = storage.load()

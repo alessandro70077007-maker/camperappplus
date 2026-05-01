@@ -97,6 +97,37 @@ def kill_edge_for_profile(profile_dir: Path) -> None:
         pass  # best-effort, non bloccare l'avvio
 
 
+def edge_count_for_profile(profile_dir: Path) -> int:
+    """Conta i msedge.exe attivi sul nostro profilo. -1 se la query fallisce."""
+    needle = str(profile_dir).lower().replace("'", "''")
+    ps_cmd = (
+        "@(Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" "
+        "| Where-Object { $_.CommandLine -like '*" + needle + "*' }).Count"
+    )
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_cmd],
+            capture_output=True, text=True, timeout=10,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        return int(result.stdout.strip() or "0")
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return -1
+
+
+def wait_until_edge_closed(profile_dir: Path, edge_proc: subprocess.Popen) -> None:
+    """Blocca finche' c'e' almeno un msedge.exe del nostro profilo. Se la query
+    fallisce, fallback su edge_proc.wait()."""
+    while True:
+        time.sleep(2)
+        n = edge_count_for_profile(profile_dir)
+        if n == 0:
+            return
+        if n == -1:
+            edge_proc.wait()  # fallback
+            return
+
+
 def run_streamlit_worker(app_path: str, port: str) -> int:
     """Punto di ingresso per il sub-processo Streamlit."""
     sys.argv = [
@@ -186,7 +217,10 @@ def main() -> int:
             "--no-first-run",
             "--no-default-browser-check",
         ])
-        edge_proc.wait()
+        # Edge in modalita' --app= fa handoff e il processo lanciato puo'
+        # uscire mentre la finestra UI resta aperta. Aspettiamo l'effettiva
+        # chiusura di tutti i msedge.exe sul nostro profilo.
+        wait_until_edge_closed(profile_dir, edge_proc)
     finally:
         streamlit.terminate()
         try:
