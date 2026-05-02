@@ -432,18 +432,6 @@ TRANSLATIONS = {
         "de": "Spitzname gespeichert.", "fr": "Pseudo enregistré.",
         "es": "Apodo guardado.",
     },
-    "firebase_missing": {
-        "it": "⚠️ File `data/firebase_credentials.json` non trovato. "
-              "Vedi README per il setup.",
-        "en": "⚠️ File `data/firebase_credentials.json` missing. "
-              "See README for setup.",
-        "de": "⚠️ Datei `data/firebase_credentials.json` fehlt. "
-              "Siehe README.",
-        "fr": "⚠️ Fichier `data/firebase_credentials.json` manquant. "
-              "Voir README.",
-        "es": "⚠️ Falta el archivo `data/firebase_credentials.json`. "
-              "Ver README.",
-    },
     "create_room": {
         "it": "➕ Crea nuova stanza", "en": "➕ Create new room",
         "de": "➕ Neuen Raum erstellen", "fr": "➕ Créer un salon",
