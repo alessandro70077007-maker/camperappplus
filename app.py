@@ -18,13 +18,20 @@ st.set_page_config(
     layout="wide",
 )
 
-# Lingua corrente (letta una volta dal DB)
+# Lingua e valuta correnti (lette una volta dal DB)
 _db_init = storage.load()
 LANG = _db_init["impostazioni"].get("lingua", "it")
+VALUTA = _db_init["impostazioni"].get("valuta", "EUR")
+SYM = storage.currency_symbol(VALUTA)
 
 
 def L(key, **kwargs):
+    kwargs.setdefault("sym", SYM)
     return t(key, LANG, **kwargs)
+
+
+def money(amount, decimals=2):
+    return storage.fmt_money(amount, VALUTA, decimals=decimals)
 
 
 # ---------- Sidebar: navigazione ----------
@@ -183,9 +190,10 @@ if pagina == "home":
         if rows_costi:
             df_costi = pd.DataFrame(rows_costi)
             df_view = df_costi.drop(columns=["_eur_km_set"]).copy()
+            eur_km_col = L("eur_per_km")
             # Mostra "—" quando non abbiamo ancora km percorsi
-            df_view[L("eur_per_km")] = [
-                f"€ {r[L('eur_per_km')]:.3f}" if r["_eur_km_set"] else "—"
+            df_view[eur_km_col] = [
+                money(r[eur_km_col], decimals=3) if r["_eur_km_set"] else "—"
                 for _, r in df_costi.iterrows()
             ]
             df_view[L("km_owned")] = df_view[L("km_owned")].map(
@@ -193,7 +201,7 @@ if pagina == "home":
             )
             fmt_cols = [L("maintenance"), L("fuel_label"), L("trips_label"), L("total")]
             st.dataframe(
-                df_view.style.format({c: "€ {:.2f}" for c in fmt_cols}),
+                df_view.style.format({c: (lambda v: money(v)) for c in fmt_cols}),
                 width="stretch", hide_index=True,
             )
             st.caption(L("eur_per_km_help"))
@@ -366,14 +374,14 @@ elif pagina == "logbook":
             L("category"): L(i.get("categoria", "int_altro")),
             L("description"): i["descrizione"],
             L("km"): f"{i['km']:,}".replace(",", "."),
-            L("cost"): f"€ {i['costo']:.2f}",
+            L("cost"): money(i["costo"]),
             "_id": i["id"],
         } for i in sorted(db["interventi"], key=lambda x: x["data"], reverse=True)]
         df = pd.DataFrame(rows).drop(columns=["_id"])
         st.dataframe(df, width="stretch", hide_index=True)
 
         totale = sum(i["costo"] for i in db["interventi"])
-        st.metric(L("total_maintenance"), f"€ {totale:,.2f}".replace(",", "."))
+        st.metric(L("total_maintenance"), money(totale))
 
         st.markdown("---")
         st.subheader(L("export_pdf_logbook"))
@@ -383,7 +391,7 @@ elif pagina == "logbook":
         with col_b:
             if cid_exp is not None:
                 from pdf_export import build_libretto_pdf
-                pdf_bytes = build_libretto_pdf(db, cid_exp, LANG)
+                pdf_bytes = build_libretto_pdf(db, cid_exp, LANG, VALUTA)
                 st.download_button(
                     L("download_pdf"),
                     data=pdf_bytes,
@@ -449,7 +457,7 @@ elif pagina == "trips":
                 L("to"): df_.strftime("%d/%m/%Y"),
                 L("days"): durata,
                 L("km"): f"{v['km_percorsi']:,}".replace(",", "."),
-                L("cost"): f"€ {v['costo']:.2f}",
+                L("cost"): money(v["costo"]),
                 L("notes"): v["note"] or "",
                 "_id": v["id"],
             })
@@ -459,7 +467,7 @@ elif pagina == "trips":
         c1, c2, c3 = st.columns(3)
         c1.metric(L("total_trips"), len(db["viaggi"]))
         c2.metric(L("total_km"), f"{sum(v['km_percorsi'] for v in db['viaggi']):,}".replace(",", "."))
-        c3.metric(L("total_trip_spending"), f"€ {sum(v['costo'] for v in db['viaggi']):,.2f}".replace(",", "."))
+        c3.metric(L("total_trip_spending"), money(sum(v["costo"] for v in db["viaggi"])))
 
         with st.expander(L("delete_trip_section")):
             for r in rows:
@@ -771,8 +779,8 @@ elif pagina == "fuel":
                     L("km"): f"{r['km']:,}".replace(",", "."),
                     L("liters"): f"{r['litri']:.2f}",
                     L("full_tank_short"): "✅" if pieno else "—",
-                    "€/L": f"{prezzo_l:.3f}",
-                    L("cost"): f"€ {r['costo']:.2f}",
+                    f"{SYM}/L": f"{prezzo_l:.3f}",
+                    L("cost"): money(r["costo"]),
                     L("station"): r["distributore"] or "",
                     L("consumption_l100"): consumo_str,
                     "_id": r["id"],
@@ -1054,6 +1062,23 @@ elif pagina == "settings":
         if st.button("💾 " + L("save")):
             storage.update_impostazioni(lingua=nuova_lingua_code)
             st.success(L("language_saved"))
+            st.rerun()
+
+    st.markdown("---")
+
+    # ----- VALUTA -----
+    st.subheader("💱 " + L("currency"))
+    valute = ["EUR", "CHF"]
+    valute_labels = [f"{storage.currency_symbol(v)} {v}" for v in valute]
+    val_idx = valute.index(VALUTA) if VALUTA in valute else 0
+    nuova_valuta_label = st.selectbox(
+        L("currency"), valute_labels, index=val_idx, key=f"cur_select_{VALUTA}",
+    )
+    nuova_valuta = valute[valute_labels.index(nuova_valuta_label)]
+    if nuova_valuta != VALUTA:
+        if st.button("💾 " + L("save"), key="save_currency_btn"):
+            storage.update_impostazioni(valuta=nuova_valuta)
+            st.success(L("currency_saved"))
             st.rerun()
 
     st.markdown("---")

@@ -11,11 +11,18 @@ from reportlab.platypus import (
 )
 
 from translations import t
+from storage import fmt_money, currency_symbol
 
 
-def build_libretto_pdf(db, camper_id, lang: str = "it") -> bytes:
+def build_libretto_pdf(db, camper_id, lang: str = "it", currency: str = "EUR") -> bytes:
+    sym = currency_symbol(currency)
+
     def L(key, **kwargs):
+        kwargs.setdefault("sym", sym)
         return t(key, lang, **kwargs)
+
+    def money(amount, decimals=2):
+        return fmt_money(amount, currency, decimals=decimals)
 
     camper = next((c for c in db["campers"] if c["id"] == camper_id), None)
     if camper is None:
@@ -76,10 +83,10 @@ def build_libretto_pdf(db, camper_id, lang: str = "it") -> bytes:
                 d,
                 f"{i['km']:,}".replace(",", "."),
                 i["descrizione"],
-                f"€ {i['costo']:.2f}",
+                money(i["costo"]),
             ])
         totale = sum(i["costo"] for i in ints)
-        data.append(["", "", L("total"), f"€ {totale:.2f}"])
+        data.append(["", "", L("total"), money(totale)])
         story.append(_make_table(data, total_row=True))
 
     # ----- Viaggi -----
@@ -98,7 +105,7 @@ def build_libretto_pdf(db, camper_id, lang: str = "it") -> bytes:
             data.append([
                 v["destinazione"], di, df_,
                 f"{v['km_percorsi']:,}".replace(",", "."),
-                f"€ {v['costo']:.2f}",
+                money(v["costo"]),
             ])
         story.append(_make_table(data))
 
@@ -118,7 +125,7 @@ def build_libretto_pdf(db, camper_id, lang: str = "it") -> bytes:
                 d,
                 f"{r['km']:,}".replace(",", "."),
                 f"{r['litri']:.2f}",
-                f"€ {r['costo']:.2f}",
+                money(r["costo"]),
                 r["distributore"] or "",
             ])
         story.append(_make_table(data))

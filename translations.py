@@ -113,7 +113,7 @@ TRANSLATIONS = {
     "notes_optional": {"it": "Note (opzionale)", "en": "Notes (optional)", "de": "Notizen (optional)", "fr": "Notes (optionnel)", "es": "Notas (opcional)"},
     "km": {"it": "Km", "en": "Km", "de": "Km", "fr": "Km", "es": "Km"},
     "cost": {"it": "Costo", "en": "Cost", "de": "Kosten", "fr": "Coût", "es": "Coste"},
-    "cost_eur": {"it": "Costo (€)", "en": "Cost (€)", "de": "Kosten (€)", "fr": "Coût (€)", "es": "Coste (€)"},
+    "cost_eur": {"it": "Costo ({sym})", "en": "Cost ({sym})", "de": "Kosten ({sym})", "fr": "Coût ({sym})", "es": "Coste ({sym})"},
     "description": {"it": "Descrizione", "en": "Description", "de": "Beschreibung", "fr": "Description", "es": "Descripción"},
     "select_camper_first": {
         "it": "Aggiungi prima un camper nella sezione 'I miei camper'.",
@@ -238,7 +238,7 @@ TRANSLATIONS = {
     "destination": {"it": "Destinazione", "en": "Destination", "de": "Reiseziel", "fr": "Destination", "es": "Destino"},
     "km_done": {"it": "Km percorsi", "en": "Km driven", "de": "Gefahrene km", "fr": "Km parcourus", "es": "Km recorridos"},
     "return_date": {"it": "Data ritorno", "en": "Return date", "de": "Rückkehrdatum", "fr": "Date retour", "es": "Fecha regreso"},
-    "total_cost_eur": {"it": "Costo totale (€)", "en": "Total cost (€)", "de": "Gesamtkosten (€)", "fr": "Coût total (€)", "es": "Coste total (€)"},
+    "total_cost_eur": {"it": "Costo totale ({sym})", "en": "Total cost ({sym})", "de": "Gesamtkosten ({sym})", "fr": "Coût total ({sym})", "es": "Coste total ({sym})"},
     "save_trip": {"it": "Salva viaggio", "en": "Save trip", "de": "Reise speichern", "fr": "Enregistrer", "es": "Guardar"},
     "trip_saved": {"it": "Viaggio registrato!", "en": "Trip saved!", "de": "Reise gespeichert!", "fr": "Voyage enregistré!", "es": "Viaje guardado!"},
     "fill_destination": {"it": "Inserisci la destinazione.", "en": "Enter destination.", "de": "Bitte Reiseziel eingeben.", "fr": "Saisissez la destination.", "es": "Introduce el destino."},
@@ -350,6 +350,12 @@ TRANSLATIONS = {
         "it": "Lingua aggiornata.", "en": "Language updated.",
         "de": "Sprache aktualisiert.", "fr": "Langue mise à jour.",
         "es": "Idioma actualizado.",
+    },
+    "currency": {"it": "Valuta", "en": "Currency", "de": "Währung", "fr": "Devise", "es": "Moneda"},
+    "currency_saved": {
+        "it": "Valuta aggiornata.", "en": "Currency updated.",
+        "de": "Währung aktualisiert.", "fr": "Devise mise à jour.",
+        "es": "Moneda actualizada.",
     },
     "reminder_section": {"it": "Promemoria scadenze", "en": "Deadline reminders", "de": "Fristen-Erinnerungen", "fr": "Rappels d'échéance", "es": "Recordatorios"},
     "days_before": {
@@ -811,23 +817,23 @@ TRANSLATIONS = {
         "fr": "Km parcourus", "es": "Km recorridos",
     },
     "eur_per_km": {
-        "it": "€/km", "en": "€/km", "de": "€/km", "fr": "€/km", "es": "€/km",
+        "it": "{sym}/km", "en": "{sym}/km", "de": "{sym}/km", "fr": "{sym}/km", "es": "{sym}/km",
     },
     "eur_per_km_help": {
-        "it": "€/km = costi totali / km percorsi da quando possiedi il camper. Imposta i 'km iniziali' del camper per renderlo accurato.",
-        "en": "€/km = total costs / km driven since you own the camper. Set the camper's 'initial km' to make it accurate.",
-        "de": "€/km = Gesamtkosten / km seit Besitz. Setze die 'Anfangs-km' für genaue Werte.",
-        "fr": "€/km = coûts totaux / km parcourus depuis l'acquisition. Définissez les 'km initiaux' pour plus de précision.",
-        "es": "€/km = costes totales / km recorridos desde la compra. Define los 'km iniciales' para mayor precisión.",
+        "it": "{sym}/km = costi totali / km percorsi da quando possiedi il camper. Imposta i 'km iniziali' del camper per renderlo accurato.",
+        "en": "{sym}/km = total costs / km driven since you own the camper. Set the camper's 'initial km' to make it accurate.",
+        "de": "{sym}/km = Gesamtkosten / km seit Besitz. Setze die 'Anfangs-km' für genaue Werte.",
+        "fr": "{sym}/km = coûts totaux / km parcourus depuis l'acquisition. Définissez les 'km initiaux' pour plus de précision.",
+        "es": "{sym}/km = costes totales / km recorridos desde la compra. Define los 'km iniciales' para mayor precisión.",
     },
 
     # ---------- Km iniziali ----------
     "km_iniziale_help": {
-        "it": "Imposta i km del camper al momento dell'acquisto: servono per calcolare €/km reali.",
-        "en": "Set the camper's km when you bought it: needed for accurate €/km.",
-        "de": "Anfangs-km zum Zeitpunkt des Kaufs eingeben: nötig für genaue €/km.",
-        "fr": "Indiquez les km au moment de l'achat : nécessaires pour le €/km réel.",
-        "es": "Define los km al momento de la compra: necesarios para el €/km real.",
+        "it": "Imposta i km del camper al momento dell'acquisto: servono per calcolare {sym}/km reali.",
+        "en": "Set the camper's km when you bought it: needed for accurate {sym}/km.",
+        "de": "Anfangs-km zum Zeitpunkt des Kaufs eingeben: nötig für genaue {sym}/km.",
+        "fr": "Indiquez les km au moment de l'achat : nécessaires pour le {sym}/km réel.",
+        "es": "Define los km al momento de la compra: necesarios para el {sym}/km real.",
     },
     "edit_km_iniziale": {
         "it": "✏️ Modifica km iniziali",
@@ -1281,14 +1287,15 @@ TRANSLATIONS = {
 
 
 def t(key: str, lang: str = "it", **kwargs) -> str:
-    """Restituisce la stringa tradotta. Fallback su italiano se manca."""
+    """Restituisce la stringa tradotta. Fallback su italiano se manca.
+    Inietta sym='€' come default per i placeholder valuta cosi' i callsite
+    legacy continuano a funzionare anche dopo aver introdotto {sym}."""
     entry = TRANSLATIONS.get(key)
     if entry is None:
         return key  # chiave mancante, ritorna la chiave per debug
     text = entry.get(lang) or entry.get("it") or key
-    if kwargs:
-        try:
-            return text.format(**kwargs)
-        except (KeyError, IndexError):
-            return text
-    return text
+    kwargs.setdefault("sym", "€")
+    try:
+        return text.format(**kwargs)
+    except (KeyError, IndexError):
+        return text

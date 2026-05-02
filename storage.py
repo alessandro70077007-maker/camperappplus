@@ -1,9 +1,58 @@
 """Persistenza semplice su file JSON. Niente DB nel prototipo."""
 import json
+import locale
 import os
 import sys
 from pathlib import Path
 from datetime import date
+
+
+_SUPPORTED_LANGS = ("it", "en", "de", "fr", "es")
+_WIN_LANG_NAMES = {
+    "italian": "it", "english": "en", "german": "de",
+    "french": "fr", "spanish": "es",
+}
+
+
+def _detect_system_lang() -> str:
+    """Lingua di sistema mappata sui codici supportati. Su Windows getlocale()
+    puo' restituire 'Italian_Italy' invece di 'it_IT', quindi controlliamo
+    sia il prefisso codice sia il nome esteso."""
+    candidates = []
+    try:
+        loc = locale.getlocale()[0]
+        if loc:
+            candidates.append(loc)
+    except (ValueError, TypeError):
+        pass
+    for var in ("LANG", "LC_ALL", "LC_MESSAGES", "LANGUAGE"):
+        v = os.environ.get(var)
+        if v:
+            candidates.append(v)
+    for cand in candidates:
+        head = cand.lower().split(".")[0].split("_")[0].split("-")[0]
+        if head in _SUPPORTED_LANGS:
+            return head
+        if head in _WIN_LANG_NAMES:
+            return _WIN_LANG_NAMES[head]
+    return "en"
+
+
+_SYSTEM_LANG = _detect_system_lang()
+
+
+_CURRENCY_SYMBOLS = {"EUR": "€", "CHF": "CHF"}
+
+
+def currency_symbol(currency: str = "EUR") -> str:
+    return _CURRENCY_SYMBOLS.get(currency, currency)
+
+
+def fmt_money(amount, currency: str = "EUR", decimals: int = 2) -> str:
+    """Formatta importo con simbolo valuta. Stile: 1.234,56 (it/de)."""
+    sym = currency_symbol(currency)
+    s = f"{amount:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"{sym} {s}"
 
 
 def _data_dir() -> Path:
@@ -33,7 +82,8 @@ def _default_db():
         "checklist": [],
         "documenti": [],
         "impostazioni": {
-            "lingua": "it",
+            "lingua": _SYSTEM_LANG,
+            "valuta": "EUR",
             "giorni_promemoria": 30,
             "email": "",
             "smtp_host": "",
