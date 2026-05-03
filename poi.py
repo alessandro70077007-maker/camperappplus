@@ -15,11 +15,23 @@ CACHE_TTL = 24 * 3600  # 24h
 CACHE_DIR = storage.DATA_DIR / "poi_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-# Endpoint Overpass: il principale + un mirror come fallback
+# Endpoint Overpass: catena di mirror pubblici. In ordine di tentativo.
+# Se uno restituisce 5xx/timeout, si passa al successivo.
+# (osm.ch e maps.mail.ru rimossi: il primo serve solo dati svizzeri,
+#  il secondo restituisce 403 fuori dalla Russia.)
 OVERPASS_ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
 ]
+# OSM richiede un User-Agent identificativo: senza, overpass-api.de risponde
+# 406 Not Acceptable. Il formato standard e' nome-app/versione + URL contatto.
+OVERPASS_HEADERS = {
+    "User-Agent": "CamperAppPlus/1.1 (https://github.com/alessandro70077007-maker/camperappplus)",
+}
+# Timeout client per singola richiesta. Server-side timeout e' 50s
+# (vedi _build_query). Tenerlo a 40s lascia margine al server.
+OVERPASS_REQ_TIMEOUT = 40
 
 # Tipi di POI supportati: chiave -> (overpass_filter, label_key, color)
 POI_TYPES = {
@@ -131,7 +143,10 @@ def fetch_pois(lat: float, lon: float, radius_km: int, types: tuple) -> tuple[li
     last_err = None
     for endpoint in OVERPASS_ENDPOINTS:
         try:
-            resp = requests.post(endpoint, data={"data": query}, timeout=60)
+            resp = requests.post(
+                endpoint, data={"data": query},
+                headers=OVERPASS_HEADERS, timeout=OVERPASS_REQ_TIMEOUT,
+            )
             resp.raise_for_status()
             data = resp.json()
             elements = data.get("elements", [])
