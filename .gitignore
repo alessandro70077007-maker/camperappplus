@@ -26,6 +26,9 @@ Thumbs.db
 # Edge app profile (creato dal launcher)
 .edge_profile/
 
+# Log runtime del launcher (rigenerato a ogni avvio)
+launcher.log
+
 # PyInstaller
 build/
 dist/
