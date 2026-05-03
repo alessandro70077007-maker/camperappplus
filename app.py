@@ -35,6 +35,35 @@ def money(amount, decimals=2):
     return storage.fmt_money(amount, VALUTA, decimals=decimals)
 
 
+def open_external(url: str) -> None:
+    """Apre URL in un browser esterno alla finestra Edge --app= che ospita
+    Streamlit. Preferisce Chrome se installato (perche' l'utente lo ha chiesto
+    esplicitamente), altrimenti usa il browser predefinito di sistema."""
+    import os
+    import subprocess
+    import webbrowser
+    chrome_candidates = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ]
+    local = os.environ.get("LOCALAPPDATA", "")
+    if local:
+        chrome_candidates.append(
+            os.path.join(local, r"Google\Chrome\Application\chrome.exe")
+        )
+    for p in chrome_candidates:
+        if os.path.exists(p):
+            try:
+                subprocess.Popen(
+                    [p, url],
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                return
+            except OSError:
+                continue
+    webbrowser.open(url)
+
+
 # ---------- Sidebar: navigazione ----------
 st.sidebar.title("🚐 CAMPERappPLUS")
 
@@ -527,9 +556,10 @@ elif pagina == "map":
 
     if not has_pos:
         st.info(L("click_locate"))
-        st.markdown(
-            f"### [{L('open_gmaps_direct')}](https://www.google.com/maps)"
-        )
+        # Bottone server-side: lancia Chrome (o browser predefinito) esterno
+        # alla finestra Edge --app=, dove i target=_blank non si aprono.
+        if st.button("🗺️ " + L("open_gmaps_direct"), key="btn_gmaps_direct"):
+            open_external("https://www.google.com/maps")
     else:
         cols = st.columns(4)
         cols[0].metric(L("latitude"), f"{lat:.5f}")
@@ -541,7 +571,8 @@ elif pagina == "map":
             cols[3].metric(L("altitude_m"), f"{altitude:.0f}")
 
         gmaps_url = f"https://www.google.com/maps?q={lat},{lon}"
-        st.markdown(f"### [{L('open_in_gmaps')}]({gmaps_url})")
+        if st.button("🗺️ " + L("open_in_gmaps"), key="btn_gmaps_pos"):
+            open_external(gmaps_url)
         st.caption(L("gmaps_more_precise"))
 
         # ----- Meteo via Open-Meteo -----
@@ -1063,7 +1094,15 @@ elif pagina == "settings":
     if local_ip is None:
         st.warning(L("phone_no_network"))
     else:
-        url = f"http://{local_ip}:8501"
+        # Porta letta dinamicamente: il launcher usa una porta libera diversa
+        # ad ogni avvio (vedi launcher.find_free_port()). Cablare 8501 produceva
+        # un QR code rotto perche' lo Streamlit reale gira su un'altra porta.
+        from streamlit import config as _st_config
+        try:
+            _port = int(_st_config.get_option("server.port"))
+        except (TypeError, ValueError):
+            _port = 8501
+        url = f"http://{local_ip}:{_port}"
         st.caption(L("phone_help"))
         col_qr, col_info = st.columns([1, 2])
         with col_qr:
