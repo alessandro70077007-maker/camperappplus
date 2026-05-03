@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alessandro70077007-maker.github.io/camperappplus/sitemap.xml
