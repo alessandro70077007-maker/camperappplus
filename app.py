@@ -648,11 +648,21 @@ elif pagina == "map":
             )
         selected_types = tuple(type_options[lbl] for lbl in selected_labels)
 
+        # Invalida risultati cached se la posizione e' cambiata: senza questo
+        # cambiando citta' nella casella di ricerca la mappa continuerebbe a
+        # mostrare i POI della citta' precedente finche' l'utente non riclicca
+        # "Cerca POI". Tolleranza ~1km (round a 2 decimali).
+        cur_loc_key = f"{round(lat, 2)}|{round(lon, 2)}"
+        if st.session_state.get("_poi_loc_key") != cur_loc_key:
+            st.session_state.pop("_poi_results", None)
+            st.session_state.pop("_poi_err", None)
+
         if st.button(L("poi_search"), key="poi_search_btn"):
             with st.spinner(L("poi_searching")):
                 results, err = poi_mod.fetch_pois(lat, lon, int(radius_km), selected_types)
             st.session_state["_poi_results"] = results
             st.session_state["_poi_err"] = err
+            st.session_state["_poi_loc_key"] = cur_loc_key
 
         results = st.session_state.get("_poi_results", [])
         err = st.session_state.get("_poi_err")
