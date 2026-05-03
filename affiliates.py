@@ -1,15 +1,29 @@
-"""Integrazione Booking.com Affiliate Partner Programme.
+"""Integrazione Booking.com via CJ Affiliate (Commission Junction).
 
-Imposta BOOKING_AID con il tuo Affiliate ID (es. "1234567") quando
-l'iscrizione su partner.booking.com e' stata approvata.
+I deeplink CJ wrappano l'URL Booking dentro il click-server CJ per tracciare
+le conversioni e attribuire la commissione al publisher.
 
-Stringa vuota = link affiliate disabilitati: l'app continua a funzionare
-identica, semplicemente i link 'Prenota su Booking' non vengono mostrati.
+Formato:
+  https://{click_server}/click-{PID}-{AID}?url=<URL_ENCODED>&sid=<SUBID>
+
+Kill-switch: se CJ_PUBLISHER_ID o CJ_ADVERTISER_ID sono vuoti,
+booking_search_url() restituisce None e i link non vengono mostrati - l'app
+continua a funzionare identica.
 """
-from urllib.parse import quote_plus
+from urllib.parse import quote, quote_plus
 
 
-BOOKING_AID = ""
+# Credenziali CJ Commission Junction per il programma Booking.com.
+CJ_PUBLISHER_ID = "7945140"
+CJ_ADVERTISER_ID = "4347401"
+# Click-server CJ associato a questo programma. Se i deeplink generati dalla
+# UI CJ usano un dominio diverso (es. tkqlhce.com, dpbolvw.net, kqzyfj.com),
+# basta aggiornare questa costante.
+CJ_CLICK_SERVER = "www.anrdoezrs.net"
+
+# Sub-ID per tracciare le conversioni provenienti dai popup POI nella mappa.
+# Consente di distinguere in dashboard CJ il traffico camperapp da altri canali.
+_CJ_SUB_ID = "camperapp_poi"
 
 
 _BOOKING_LANG = {
@@ -17,22 +31,29 @@ _BOOKING_LANG = {
 }
 
 
+def is_enabled() -> bool:
+    return bool(CJ_PUBLISHER_ID and CJ_ADVERTISER_ID and CJ_CLICK_SERVER)
+
+
 def booking_search_url(name: str, lat: float | None = None,
                        lon: float | None = None, lang: str = "it") -> str | None:
-    """Deeplink di ricerca Booking pre-compilato sul nome del POI e, se
-    forniti, sulle coordinate. Aggiunge label di tracking per distinguere
-    il traffico CAMPERappPLUS in dashboard partner."""
-    if not BOOKING_AID:
+    """Deeplink CJ -> Booking pre-compilato sul nome del POI e, se forniti,
+    sulle coordinate. Ritorna None se le credenziali CJ non sono impostate."""
+    if not is_enabled():
         return None
     booking_lang = _BOOKING_LANG.get(lang, "en-gb")
-    params = [
-        f"aid={BOOKING_AID}",
-        "label=camperapp_poi",
+    booking_params = [
         f"ss={quote_plus(name or '')}",
         f"lang={booking_lang}",
     ]
     if lat is not None and lon is not None:
-        params.append(f"latitude={lat}")
-        params.append(f"longitude={lon}")
-        params.append("dest_type=latlong")
-    return "https://www.booking.com/searchresults.html?" + "&".join(params)
+        booking_params.append(f"latitude={lat}")
+        booking_params.append(f"longitude={lon}")
+        booking_params.append("dest_type=latlong")
+    booking_url = (
+        "https://www.booking.com/searchresults.html?" + "&".join(booking_params)
+    )
+    return (
+        f"https://{CJ_CLICK_SERVER}/click-{CJ_PUBLISHER_ID}-{CJ_ADVERTISER_ID}"
+        f"?url={quote(booking_url, safe='')}&sid={_CJ_SUB_ID}"
+    )
