@@ -714,7 +714,7 @@ elif pagina == "map":
             st_folium(fmap, width=None, height=480, returned_objects=[])
 
             # Disclosure affiliate: visibile solo se ci sono link Booking attivi.
-            if affiliates.BOOKING_AID and any(
+            if affiliates.is_enabled() and any(
                 r["type"] in ("camp_site", "caravan_site") for r in results
             ):
                 st.caption(L("affiliate_disclosure"))
