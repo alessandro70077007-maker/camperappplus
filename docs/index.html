@@ -101,6 +101,7 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--
 .cta { display: inline-block; background: var(--giallo); color: var(--testo); font-weight: 700; font-size: 18px; padding: 16px 36px; border-radius: 12px; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
 .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
 .cta-meta { display: block; margin-top: 14px; font-size: 14px; opacity: 0.8; }
+.hero-novelty { display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,200,70,0.55); color: var(--giallo); padding: 8px 18px; border-radius: 999px; font-size: 14px; font-weight: 600; margin-bottom: 24px; backdrop-filter: blur(4px); letter-spacing: 0.2px; }
 
 /* Sections */
 section { padding: 80px 0; }
@@ -163,6 +164,7 @@ footer a:hover { text-decoration: underline; }
     <img src="icon.png" alt="CAMPERappPLUS logo">
     <h1>CAMPERapp<span class="plus">PLUS</span></h1>
     <p class="tagline" data-i18n="tagline"></p>
+    <p class="hero-novelty" data-i18n="hero_novelty"></p>
     <a href="https://github.com/alessandro70077007-maker/camperappplus/releases/download/v1.2/CamperAppPlus_v1.2_windows.zip" class="cta">
       <span data-i18n="cta">⬇️ Download for Windows (104 MB)</span>
     </a>
@@ -302,6 +304,7 @@ const I18N = {
     page_title: "CAMPERappPLUS — Gestione camper per Windows",
     page_desc: "App desktop per camperisti: scadenze, libretto, viaggi, consumi, aree sosta, meteo. Dati locali, privacy totale, gratis.",
     tagline: "L'app desktop per gestire il tuo camper: scadenze, libretto digitale, viaggi, consumi, aree sosta e meteo. Tutto in un unico posto, gratis.",
+    hero_novelty: "✨ NOVITÀ v1.2 — Companion mobile via QR",
     cta: "⬇️ Scarica per Windows (106 MB)",
     cta_meta: "v1.2 · Windows 10/11 · Funziona offline (eccetto mappa e meteo)",
     features_title: "Tutto quello che serve a un camperista",
@@ -356,6 +359,7 @@ const I18N = {
     page_title: "CAMPERappPLUS — Camper management for Windows",
     page_desc: "Desktop app for camper owners: deadlines, logbook, trips, fuel, parking sites, weather. Local data, total privacy, free.",
     tagline: "The desktop app to manage your camper: deadlines, digital logbook, trips, fuel, parking sites and weather. All in one place, free.",
+    hero_novelty: "✨ NEW in v1.2 — Mobile companion via QR",
     cta: "⬇️ Download for Windows (106 MB)",
     cta_meta: "v1.2 · Windows 10/11 · Works offline (except map and weather)",
     features_title: "Everything a camper owner needs",
@@ -410,6 +414,7 @@ const I18N = {
     page_title: "CAMPERappPLUS — Wohnmobil-Verwaltung für Windows",
     page_desc: "Desktop-App für Wohnmobilbesitzer: Fristen, Wartungsheft, Reisen, Verbrauch, Stellplätze, Wetter. Lokale Daten, volle Privatsphäre, kostenlos.",
     tagline: "Die Desktop-App für dein Wohnmobil: Fristen, digitales Wartungsheft, Reisen, Verbrauch, Stellplätze und Wetter. Alles an einem Ort, kostenlos.",
+    hero_novelty: "✨ NEU in v1.2 — Mobiler Begleiter via QR",
     cta: "⬇️ Für Windows herunterladen (106 MB)",
     cta_meta: "v1.2 · Windows 10/11 · Offline-fähig (außer Karte und Wetter)",
     features_title: "Alles, was ein Wohnmobilist braucht",
@@ -464,6 +469,7 @@ const I18N = {
     page_title: "CAMPERappPLUS — Gestion de camping-car pour Windows",
     page_desc: "Application bureau pour propriétaires de camping-car : échéances, carnet, voyages, carburant, aires, météo. Données locales, vie privée totale, gratuit.",
     tagline: "L'application de bureau pour gérer votre camping-car : échéances, carnet d'entretien, voyages, carburant, aires et météo. Tout au même endroit, gratuit.",
+    hero_novelty: "✨ NOUVEAU en v1.2 — Compagnon mobile via QR",
     cta: "⬇️ Télécharger pour Windows (106 Mo)",
     cta_meta: "v1.2 · Windows 10/11 · Fonctionne hors-ligne (sauf carte et météo)",
     features_title: "Tout ce qu'il faut à un camping-cariste",
@@ -518,6 +524,7 @@ const I18N = {
     page_title: "CAMPERappPLUS — Gestión de autocaravana para Windows",
     page_desc: "App de escritorio para propietarios de autocaravana: vencimientos, libro de mantenimiento, viajes, combustible, áreas, tiempo. Datos locales, privacidad total, gratis.",
     tagline: "La app de escritorio para gestionar tu autocaravana: vencimientos, libro digital, viajes, combustible, áreas y tiempo. Todo en un solo lugar, gratis.",
+    hero_novelty: "✨ NUEVO en v1.2 — Compañero móvil vía QR",
     cta: "⬇️ Descargar para Windows (106 MB)",
     cta_meta: "v1.2 · Windows 10/11 · Funciona offline (excepto mapa y tiempo)",
     features_title: "Todo lo que necesita un autocaravanista",
