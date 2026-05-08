@@ -1,10 +1,40 @@
 """Persistenza semplice su file JSON. Niente DB nel prototipo."""
+import functools
 import json
 import locale
 import os
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from datetime import date
+
+# Lock cross-platform su un file dedicato (data/.lock). Le funzioni che
+# modificano il DB sono decorate con @_mutating: load+save avvengono mentre
+# il lock e' tenuto, cosi' due processi (mobile + desktop) non si pestano.
+if sys.platform == "win32":
+    import msvcrt
+
+    def _lock_fd(fd):
+        # LK_LOCK blocca finche' la regione si libera; lockata 1 byte
+        # all'offset corrente del descrittore.
+        msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+
+    def _unlock_fd(fd):
+        try:
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+else:
+    import fcntl
+
+    def _lock_fd(fd):
+        fcntl.flock(fd, fcntl.LOCK_EX)
+
+    def _unlock_fd(fd):
+        try:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        except OSError:
+            pass
 
 
 _SUPPORTED_LANGS = ("it", "en", "de", "fr", "es")
@@ -70,6 +100,31 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 FILES_DIR = DATA_DIR / "files"
 FILES_DIR.mkdir(exist_ok=True)
 DB_FILE = DATA_DIR / "camper.json"
+LOCK_FILE = DATA_DIR / ".lock"
+
+
+@contextmanager
+def _file_lock():
+    """Lock esclusivo cross-process su LOCK_FILE. Bloccante: se un altro
+    processo (mobile/desktop) sta scrivendo, attende il rilascio."""
+    with open(LOCK_FILE, "a+") as lf:
+        _lock_fd(lf.fileno())
+        try:
+            yield
+        finally:
+            _unlock_fd(lf.fileno())
+
+
+def _mutating(fn):
+    """Decoratore per funzioni che fanno load+modify+save: garantisce che
+    l'intera sequenza avvenga sotto lock. Senza questo, due processi
+    potrebbero entrambi load() la stessa versione e l'ultimo save()
+    perderebbe le modifiche dell'altro (lost update)."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        with _file_lock():
+            return fn(*args, **kwargs)
+    return wrapper
 
 
 def _default_db():
@@ -125,8 +180,13 @@ def load():
 
 
 def save(db):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
+    # Atomic write: scriviamo su .tmp e poi rinominiamo. Su NTFS e POSIX
+    # os.replace e' atomico, quindi un lettore concorrente vede sempre il
+    # file intero (vecchio o nuovo, mai a meta').
+    tmp = DB_FILE.with_suffix(DB_FILE.suffix + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(db, f, indent=2, ensure_ascii=False, default=str)
+    os.replace(tmp, DB_FILE)
 
 
 def _next_id(items):
@@ -134,6 +194,7 @@ def _next_id(items):
 
 
 # ---------- Camper ----------
+@_mutating
 def add_camper(marca, modello, anno, targa, km):
     db = load()
     new_id = _next_id(db["campers"])
@@ -150,6 +211,7 @@ def add_camper(marca, modello, anno, targa, km):
     return new_id
 
 
+@_mutating
 def update_camper_km(camper_id, km):
     db = load()
     for c in db["campers"]:
@@ -158,6 +220,7 @@ def update_camper_km(camper_id, km):
     save(db)
 
 
+@_mutating
 def update_camper_km_iniziale(camper_id, km_iniziale):
     db = load()
     for c in db["campers"]:
@@ -166,6 +229,7 @@ def update_camper_km_iniziale(camper_id, km_iniziale):
     save(db)
 
 
+@_mutating
 def delete_camper(camper_id):
     db = load()
     db["campers"] = [c for c in db["campers"] if c["id"] != camper_id]
@@ -184,6 +248,7 @@ def delete_camper(camper_id):
 
 
 # ---------- Scadenze ----------
+@_mutating
 def add_scadenza(camper_id, tipo, data_scadenza, note):
     db = load()
     new_id = _next_id(db["scadenze"])
@@ -197,6 +262,7 @@ def add_scadenza(camper_id, tipo, data_scadenza, note):
     save(db)
 
 
+@_mutating
 def delete_scadenza(scadenza_id):
     db = load()
     db["scadenze"] = [s for s in db["scadenze"] if s["id"] != scadenza_id]
@@ -204,6 +270,7 @@ def delete_scadenza(scadenza_id):
 
 
 # ---------- Interventi ----------
+@_mutating
 def add_intervento(camper_id, data_intervento, descrizione, costo, km, categoria="altro"):
     db = load()
     new_id = _next_id(db["interventi"])
@@ -219,6 +286,7 @@ def add_intervento(camper_id, data_intervento, descrizione, costo, km, categoria
     save(db)
 
 
+@_mutating
 def delete_intervento(intervento_id):
     db = load()
     db["interventi"] = [i for i in db["interventi"] if i["id"] != intervento_id]
@@ -226,6 +294,7 @@ def delete_intervento(intervento_id):
 
 
 # ---------- Viaggi ----------
+@_mutating
 def add_viaggio(camper_id, data_inizio, data_fine, destinazione, km_percorsi, costo, note):
     db = load()
     new_id = _next_id(db["viaggi"])
@@ -242,6 +311,7 @@ def add_viaggio(camper_id, data_inizio, data_fine, destinazione, km_percorsi, co
     save(db)
 
 
+@_mutating
 def delete_viaggio(viaggio_id):
     db = load()
     db["viaggi"] = [v for v in db["viaggi"] if v["id"] != viaggio_id]
@@ -249,6 +319,7 @@ def delete_viaggio(viaggio_id):
 
 
 # ---------- Rifornimenti ----------
+@_mutating
 def add_rifornimento(camper_id, data_rif, km, litri, costo, distributore, note, pieno=True):
     db = load()
     new_id = _next_id(db["rifornimenti"])
@@ -266,6 +337,7 @@ def add_rifornimento(camper_id, data_rif, km, litri, costo, distributore, note, 
     save(db)
 
 
+@_mutating
 def delete_rifornimento(rifornimento_id):
     db = load()
     db["rifornimenti"] = [r for r in db["rifornimenti"] if r["id"] != rifornimento_id]
@@ -273,6 +345,7 @@ def delete_rifornimento(rifornimento_id):
 
 
 # ---------- Checklist ----------
+@_mutating
 def add_checklist_voce(camper_id, voce, categoria):
     db = load()
     new_id = _next_id(db["checklist"])
@@ -286,6 +359,7 @@ def add_checklist_voce(camper_id, voce, categoria):
     save(db)
 
 
+@_mutating
 def toggle_checklist_voce(voce_id):
     db = load()
     for v in db["checklist"]:
@@ -294,12 +368,14 @@ def toggle_checklist_voce(voce_id):
     save(db)
 
 
+@_mutating
 def delete_checklist_voce(voce_id):
     db = load()
     db["checklist"] = [v for v in db["checklist"] if v["id"] != voce_id]
     save(db)
 
 
+@_mutating
 def reset_checklist(camper_id, categoria):
     db = load()
     for v in db["checklist"]:
@@ -309,6 +385,7 @@ def reset_checklist(camper_id, categoria):
 
 
 # ---------- Documenti ----------
+@_mutating
 def add_documento(camper_id, tipo, nome_originale, contenuto_bytes, note):
     db = load()
     new_id = _next_id(db["documenti"])
@@ -329,6 +406,7 @@ def add_documento(camper_id, tipo, nome_originale, contenuto_bytes, note):
     save(db)
 
 
+@_mutating
 def delete_documento(documento_id):
     db = load()
     target = None
@@ -347,6 +425,7 @@ def documento_path(documento):
 
 
 # ---------- Impostazioni ----------
+@_mutating
 def update_impostazioni(**kwargs):
     db = load()
     db["impostazioni"].update(kwargs)
