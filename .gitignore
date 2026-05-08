@@ -37,3 +37,9 @@ dist/
 # Bundle ZIP copiato nella landing per test locale (artefatto)
 # Il ZIP vero va su GitHub Releases, non nel repo
 docs/*.zip
+
+# QR del server mobile/run_qr.py (rigenerato a ogni avvio con IP corrente)
+mobile/qr_telefono.png
+
+# Lock file usato per sync cross-process tra desktop Streamlit e mobile Flet
+data/.lock

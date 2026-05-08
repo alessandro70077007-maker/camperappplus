@@ -101,6 +101,54 @@ TRANSLATIONS = {
         "es": "⚠️ La geolocalización no funciona por IP local (requiere HTTPS). "
               "En el móvil usa el botón \"Abrir Google Maps\".",
     },
+    "install_pwa_section": {
+        "it": "Installa l'app sul telefono (CAMPERappMOBILE)",
+        "en": "Install the app on your phone (CAMPERappMOBILE)",
+        "de": "App auf dem Handy installieren (CAMPERappMOBILE)",
+        "fr": "Installer l'app sur le téléphone (CAMPERappMOBILE)",
+        "es": "Instala la app en el móvil (CAMPERappMOBILE)",
+    },
+    "install_pwa_help": {
+        "it": "Inquadra il QR con il telefono per aprire CAMPERappMOBILE, "
+              "poi aggiungila alla schermata Home: ti diventa un'icona "
+              "come un'app vera.",
+        "en": "Scan the QR with your phone to open CAMPERappMOBILE, then "
+              "add it to the Home screen: you'll get an icon like a real app.",
+        "de": "QR mit dem Handy scannen, um CAMPERappMOBILE zu öffnen, "
+              "dann zum Home-Bildschirm hinzufügen: erscheint als App-Symbol.",
+        "fr": "Scannez le QR avec le téléphone pour ouvrir CAMPERappMOBILE, "
+              "puis ajoutez-la à l'écran d'accueil: icône comme une vraie app.",
+        "es": "Escanea el QR con el móvil para abrir CAMPERappMOBILE, "
+              "luego añade a la pantalla de inicio: icono como una app real.",
+    },
+    "install_pwa_steps": {
+        "it": "**Android (Chrome)**: menu ⋮ → *Aggiungi a schermata Home*.\n\n"
+              "**iPhone (Safari)**: pulsante Condividi 📤 → *Aggiungi a Home*.",
+        "en": "**Android (Chrome)**: menu ⋮ → *Add to Home screen*.\n\n"
+              "**iPhone (Safari)**: Share button 📤 → *Add to Home Screen*.",
+        "de": "**Android (Chrome)**: Menü ⋮ → *Zum Startbildschirm hinzufügen*.\n\n"
+              "**iPhone (Safari)**: Teilen 📤 → *Zum Home-Bildschirm*.",
+        "fr": "**Android (Chrome)**: menu ⋮ → *Ajouter à l'écran d'accueil*.\n\n"
+              "**iPhone (Safari)**: bouton Partager 📤 → *Sur l'écran d'accueil*.",
+        "es": "**Android (Chrome)**: menú ⋮ → *Añadir a pantalla principal*.\n\n"
+              "**iPhone (Safari)**: botón Compartir 📤 → *Añadir a inicio*.",
+    },
+    "install_pwa_server_warning": {
+        "it": "⚠️ Il server della mobile deve essere acceso: lancia "
+              "`python mobile/run_qr.py` sul PC e tienilo aperto. Telefono e "
+              "PC devono essere sulla stessa Wi-Fi.",
+        "en": "⚠️ The mobile server must be running: launch "
+              "`python mobile/run_qr.py` on the PC and keep it open. Phone and "
+              "PC must be on the same Wi-Fi.",
+        "de": "⚠️ Der Mobile-Server muss laufen: `python mobile/run_qr.py` "
+              "auf dem PC starten und offen lassen. Handy und PC im gleichen WLAN.",
+        "fr": "⚠️ Le serveur mobile doit être actif: lancez "
+              "`python mobile/run_qr.py` sur le PC et laissez-le ouvert. "
+              "Téléphone et PC sur le même Wi-Fi.",
+        "es": "⚠️ El servidor móvil debe estar activo: ejecuta "
+              "`python mobile/run_qr.py` en el PC y déjalo abierto. "
+              "Móvil y PC en la misma Wi-Fi.",
+    },
 
     # ---------- Comuni ----------
     "camper": {"it": "Camper", "en": "Camper", "de": "Wohnmobil", "fr": "Camping-car", "es": "Autocaravana"},

@@ -1072,8 +1072,8 @@ elif pagina == "settings":
     db = storage.load()
     imp = db["impostazioni"]
 
-    # ----- QR per aprire l'app su telefono -----
-    st.subheader(L("phone_section"))
+    # ----- QR per installare la PWA mobile (CamperAppMobile) -----
+    st.subheader("📱 " + L("install_pwa_section"))
 
     import socket
     import io
@@ -1094,25 +1094,21 @@ elif pagina == "settings":
     if local_ip is None:
         st.warning(L("phone_no_network"))
     else:
-        # Porta letta dinamicamente: il launcher usa una porta libera diversa
-        # ad ogni avvio (vedi launcher.find_free_port()). Cablare 8501 produceva
-        # un QR code rotto perche' lo Streamlit reale gira su un'altra porta.
-        from streamlit import config as _st_config
-        try:
-            _port = int(_st_config.get_option("server.port"))
-        except (TypeError, ValueError):
-            _port = 8501
-        url = f"http://{local_ip}:{_port}"
-        st.caption(L("phone_help"))
-        col_qr, col_info = st.columns([1, 2])
-        with col_qr:
-            img = qrcode.make(url)
+        # Porta del server Flet (mobile/run_qr.py default 8550)
+        pwa_port = 8550
+        pwa_url = f"http://{local_ip}:{pwa_port}"
+        st.caption(L("install_pwa_help"))
+
+        col_qr_pwa, col_info_pwa = st.columns([1, 2])
+        with col_qr_pwa:
+            img = qrcode.make(pwa_url)
             buf = io.BytesIO()
             img.save(buf, format="PNG")
             st.image(buf.getvalue(), width=220)
-        with col_info:
-            st.code(url, language=None)
-            st.caption(L("phone_geo_warning"))
+        with col_info_pwa:
+            st.code(pwa_url, language=None)
+            st.markdown(L("install_pwa_steps"))
+            st.caption(L("install_pwa_server_warning"))
 
     st.markdown("---")
 
