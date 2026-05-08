@@ -43,3 +43,6 @@ mobile/qr_telefono.png
 
 # Lock file usato per sync cross-process tra desktop Streamlit e mobile Flet
 data/.lock
+
+# Windows Sandbox config personale (contiene path locale dell'autore)
+test_in_sandbox.wsb
