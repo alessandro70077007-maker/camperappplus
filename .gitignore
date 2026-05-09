@@ -33,6 +33,7 @@ launcher.log
 build/
 dist/
 *.spec.bak
+build.log
 
 # Bundle ZIP copiato nella landing per test locale (artefatto)
 # Il ZIP vero va su GitHub Releases, non nel repo

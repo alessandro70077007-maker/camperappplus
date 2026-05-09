@@ -20,10 +20,11 @@ if str(ROOT) not in sys.path:
 
 import flet as ft
 
+import affiliates
 import poi
 import storage
 from translations import t as _t, LINGUE_DISPONIBILI
-from weather import geocode
+from weather import code_to_emoji_key, fetch_weather, geocode
 
 
 # Etichette UI proprie del mobile, non presenti in translations.py.
@@ -232,6 +233,9 @@ class AppState:
         self.map_results_label: str = ""  # "Torino, Piemonte, Italia"
         self.map_error_key: str | None = None  # chiave di _MOBILE_LABELS
         self.map_loading: bool = False
+        # Meteo della posizione cercata sulla mappa
+        self.map_weather: dict | None = None
+        self.map_weather_err: str | None = None
         # Auto-refresh: mtime dell'ultimo camper.json visto. Il task watcher
         # in main() ricarica la pagina se l'altra app (desktop) ha salvato.
         self.last_db_mtime: float = 0.0
@@ -2546,6 +2550,96 @@ def _toggle_map_type(state: AppState, key: str, selected: bool) -> None:
         state.map_types.discard(key)
 
 
+def _build_weather_section(state: AppState) -> ft.Control | None:
+    """Riquadro meteo (current + forecast 5gg) per la posizione cercata.
+    Ritorna None se non c'e' nessun dato/errore da mostrare."""
+    L = state.t
+    if state.map_weather_err:
+        return _info_box(
+            L("weather_error", err=state.map_weather_err),
+            ft.Icons.CLOUD_OFF,
+            icon_color=ft.Colors.ERROR,
+            bgcolor=ft.Colors.ERROR_CONTAINER,
+        )
+    data = state.map_weather
+    if not data:
+        return None
+
+    cur = data.get("current") or {}
+    cur_emoji, cur_key = code_to_emoji_key(int(cur.get("weather_code", 0) or 0))
+
+    def metric(label: str, value: str) -> ft.Control:
+        return ft.Container(
+            content=ft.Column([
+                ft.Text(label, size=11,
+                        color=ft.Colors.ON_SURFACE_VARIANT),
+                ft.Text(value, size=16, weight=ft.FontWeight.W_600),
+            ], spacing=2, tight=True),
+            padding=8,
+            expand=True,
+        )
+
+    current_row = ft.Row([
+        metric(L("weather_temp"),
+               f"{cur.get('temperature_2m', 0):.0f}°C"),
+        metric(L("weather_condition"),
+               f"{cur_emoji} {L(cur_key)}"),
+        metric(L("weather_wind"),
+               f"{cur.get('wind_speed_10m', 0):.0f} km/h"),
+        metric(L("weather_humidity"),
+               f"{cur.get('relative_humidity_2m', 0):.0f}%"),
+    ], wrap=True, run_spacing=4)
+
+    children: list[ft.Control] = [
+        ft.Text(L("weather_section"), weight=ft.FontWeight.W_600),
+        ft.Text(L("weather_caption"), size=11,
+                color=ft.Colors.ON_SURFACE_VARIANT),
+        current_row,
+    ]
+
+    daily = data.get("daily") or {}
+    days = daily.get("time") or []
+    if days:
+        forecast_cards: list[ft.Control] = []
+        for i, iso in enumerate(days):
+            d = date.fromisoformat(iso)
+            dcode = int((daily.get("weather_code") or [0])[i] or 0)
+            demoji, _dkey = code_to_emoji_key(dcode)
+            tmax = (daily.get("temperature_2m_max") or [0])[i]
+            tmin = (daily.get("temperature_2m_min") or [0])[i]
+            prec = (daily.get("precipitation_sum") or [0])[i] or 0
+            day_children = [
+                ft.Text(d.strftime("%a %d/%m"),
+                        size=11, weight=ft.FontWeight.W_600),
+                ft.Text(demoji, size=24),
+                ft.Text(f"{tmax:.0f}° / {tmin:.0f}°", size=12),
+            ]
+            if prec > 0:
+                day_children.append(ft.Text(f"💧 {prec:.1f} mm",
+                                            size=10,
+                                            color=ft.Colors.ON_SURFACE_VARIANT))
+            forecast_cards.append(ft.Container(
+                content=ft.Column(day_children, spacing=2, tight=True,
+                                  horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=8, width=82,
+                border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+                border_radius=8,
+            ))
+        children.append(ft.Text(L("weather_forecast_5d"),
+                                weight=ft.FontWeight.W_600))
+        children.append(ft.Row(forecast_cards, scroll=ft.ScrollMode.AUTO,
+                               spacing=8))
+        children.append(ft.Text(L("weather_source"), size=10,
+                                color=ft.Colors.ON_SURFACE_VARIANT))
+
+    return ft.Container(
+        content=ft.Column(children, spacing=8, tight=True),
+        padding=12,
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+        border_radius=10,
+    )
+
+
 def _poi_card(state: AppState, r: dict) -> ft.Control:
     L = state.t
     name = r.get("name") or L("map_unnamed")
@@ -2594,6 +2688,21 @@ def _poi_card(state: AppState, r: dict) -> ft.Control:
         actions.append(ft.OutlinedButton(
             L("map_website"), icon=ft.Icons.LANGUAGE, on_click=open_site,
         ))
+
+    # Affiliate Booking: solo per campeggi e aree sosta camper, e solo
+    # se le credenziali CJ sono configurate (altrimenti booking_search_url=None).
+    if r.get("type") in ("camp_site", "caravan_site"):
+        burl = affiliates.booking_search_url(
+            r.get("name") or "", r.get("lat"), r.get("lon"), state.lang,
+        )
+        if burl:
+            async def open_booking(e, u=burl):
+                if state.url_launcher is not None:
+                    await state.url_launcher.launch_url(u)
+            actions.append(ft.OutlinedButton(
+                L("poi_book_booking"), icon=ft.Icons.HOTEL,
+                on_click=open_booking,
+            ))
 
     return ft.Container(
         content=ft.Column([
@@ -2668,6 +2777,8 @@ def build_map(state: AppState) -> ft.Control:
         state.map_error_key = None
         state.map_results = []
         state.map_results_label = ""
+        state.map_weather = None
+        state.map_weather_err = None
         state.refresh()
 
         geo = await asyncio.to_thread(geocode, q, state.lang)
@@ -2678,13 +2789,20 @@ def build_map(state: AppState) -> ft.Control:
             return
         lat, lon, display = geo
         types = tuple(sorted(state.map_types))
-        results, err = await asyncio.to_thread(
+        # POI + meteo in parallelo: usano endpoint diversi, nessun conflitto.
+        pois_task = asyncio.to_thread(
             poi.fetch_pois, lat, lon, state.map_radius_km, types,
+        )
+        weather_task = asyncio.to_thread(fetch_weather, lat, lon)
+        (results, err), (wdata, werr) = await asyncio.gather(
+            pois_task, weather_task,
         )
         state.map_loading = False
         state.map_error_key = "map_network_error" if err else None
         state.map_results = results
         state.map_results_label = display
+        state.map_weather = wdata
+        state.map_weather_err = werr
         state.refresh()
 
     children: list[ft.Control] = [
@@ -2726,6 +2844,11 @@ def build_map(state: AppState) -> ft.Control:
             bgcolor=ft.Colors.ERROR_CONTAINER,
         ))
 
+    weather_section = _build_weather_section(state)
+    if weather_section is not None:
+        children.append(ft.Divider())
+        children.append(weather_section)
+
     if state.map_results:
         children.append(ft.Divider())
         children.append(ft.Text(
@@ -2735,6 +2858,15 @@ def build_map(state: AppState) -> ft.Control:
         ))
         for r in state.map_results:
             children.append(_poi_card(state, r))
+        # Disclosure affiliate: visibile solo se ci sono link Booking attivi.
+        if affiliates.is_enabled() and any(
+            r.get("type") in ("camp_site", "caravan_site")
+            for r in state.map_results
+        ):
+            children.append(ft.Text(
+                L("affiliate_disclosure"), size=10,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+            ))
     elif (state.map_results_label and not state.map_loading
           and not state.map_error_key):
         children.append(_info_box(L("map_no_results"), ft.Icons.SEARCH_OFF))
