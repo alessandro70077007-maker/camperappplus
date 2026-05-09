@@ -4,9 +4,17 @@ dal telefono sulla stessa rete WiFi.
 Uso:
     python mobile/run_qr.py [porta]      # porta default: 8550
 """
+import os
 import socket
 import sys
 from pathlib import Path
+
+# Disabilita l'apertura automatica del browser fatta da Flet con
+# AppView.WEB_BROWSER. Flet aprirebbe Edge sull'URL host (0.0.0.0), che
+# il browser rifiuta come ERR_ADDRESS_INVALID. Con questa env var settata
+# Flet salta open_in_browser() (vedi flet/app.py: il check e' "url_prefix
+# is None") e l'utente apre manualmente localhost dal PC o scansiona il QR.
+os.environ.setdefault("FLET_DISPLAY_URL_PREFIX", "")
 
 # Su Windows il terminale e' spesso cp1252: senza UTF-8 i blocchi del QR
 # (█ etc.) crasciano con UnicodeEncodeError.
