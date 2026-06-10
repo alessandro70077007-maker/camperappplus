@@ -236,6 +236,18 @@ if pagina == "home":
             )
             st.caption(L("eur_per_km_help"))
 
+    # Banner affiliato Acronis: stesso annuncio CJ della landing e del
+    # companion mobile, con sub-ID dedicato per distinguere i click desktop.
+    st.markdown("---")
+    with st.container(border=True):
+        st.caption(L("ad_label").upper())
+        st.markdown("**Acronis Cyber Protect**")
+        st.write(L("ad_acronis_desc"))
+        st.link_button(
+            "🔒 " + L("ad_learn_more"),
+            affiliates.acronis_banner_url("camperapp_desktop"),
+        )
+
 
 # ============================================================
 # PAGINA — Camper
