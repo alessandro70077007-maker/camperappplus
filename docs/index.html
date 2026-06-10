@@ -132,6 +132,15 @@ section { padding: 80px 0; }
 .install-card li { margin-bottom: 10px; font-size: 15px; }
 .note { background: #fff8db; border-left: 4px solid var(--giallo); padding: 16px 20px; border-radius: 8px; margin-top: 20px; font-size: 14px; color: var(--testo); }
 
+/* Sponsor */
+.sponsor { padding: 40px 0; }
+.sponsor-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; max-width: 640px; margin: 0 auto; text-align: center; }
+.sponsor-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--testo-soft); margin-bottom: 10px; }
+.sponsor-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.sponsor-card p { color: var(--testo-soft); font-size: 14px; margin-bottom: 16px; }
+.sponsor-cta { display: inline-block; background: var(--blu); color: white; font-weight: 600; font-size: 15px; padding: 10px 24px; border-radius: 10px; text-decoration: none; transition: background 0.15s; }
+.sponsor-cta:hover { background: var(--blu-scuro); }
+
 /* Footer */
 footer { background: var(--blu-scuro); color: rgba(255,255,255,0.85); padding: 40px 0; text-align: center; font-size: 14px; }
 footer a { color: var(--giallo); text-decoration: none; }
@@ -290,6 +299,21 @@ footer a:hover { text-decoration: underline; }
   </div>
 </section>
 
+<!-- CJ Affiliate: Acronis Cyber Protect (click-101739837-14426269) -->
+<section class="sponsor">
+  <div class="container">
+    <div class="sponsor-card">
+      <span class="sponsor-label" data-i18n="ad_label"></span>
+      <h3>Acronis Cyber Protect</h3>
+      <p data-i18n="ad_desc"></p>
+      <a href="https://www.tkqlhce.com/click-101739837-14426269" target="_blank" rel="sponsored noopener" class="sponsor-cta">
+        <span data-i18n="ad_cta">Learn more →</span>
+      </a>
+      <img src="https://www.tkqlhce.com/image-101739837-14426269" width="1" height="1" alt="" style="border:0">
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="container">
     <p><strong>CAMPERapp<span style="color:var(--giallo)">PLUS</span></strong> — <span data-i18n="footer_subtitle"></span></p>
@@ -354,6 +378,9 @@ const I18N = {
     footer_subtitle: "un progetto indipendente per camperisti",
     footer_feedback: "Feedback, bug, idee? Scrivimi a",
     footer_attribution: "Mappa © OpenStreetMap contributors · Meteo © Open-Meteo",
+    ad_label: "Annuncio",
+    ad_desc: "Backup e sicurezza informatica in un'unica soluzione: proteggi i dati del tuo PC e dei tuoi dispositivi.",
+    ad_cta: "Scopri di più →",
   },
   en: {
     page_title: "CAMPERappPLUS — Camper management for Windows",
@@ -409,6 +436,9 @@ const I18N = {
     footer_subtitle: "an independent project for camper owners",
     footer_feedback: "Feedback, bugs, ideas? Email me at",
     footer_attribution: "Map © OpenStreetMap contributors · Weather © Open-Meteo",
+    ad_label: "Advertisement",
+    ad_desc: "Backup and cybersecurity in one solution: protect the data on your PC and devices.",
+    ad_cta: "Learn more →",
   },
   de: {
     page_title: "CAMPERappPLUS — Wohnmobil-Verwaltung für Windows",
@@ -464,6 +494,9 @@ const I18N = {
     footer_subtitle: "ein unabhängiges Projekt für Wohnmobilbesitzer",
     footer_feedback: "Feedback, Bugs, Ideen? Schreib mir an",
     footer_attribution: "Karte © OpenStreetMap contributors · Wetter © Open-Meteo",
+    ad_label: "Anzeige",
+    ad_desc: "Backup und Cybersicherheit in einer Lösung: Schütze die Daten auf deinem PC und deinen Geräten.",
+    ad_cta: "Mehr erfahren →",
   },
   fr: {
     page_title: "CAMPERappPLUS — Gestion de camping-car pour Windows",
@@ -519,6 +552,9 @@ const I18N = {
     footer_subtitle: "un projet indépendant pour camping-caristes",
     footer_feedback: "Retours, bugs, idées ? Écrivez-moi à",
     footer_attribution: "Carte © OpenStreetMap contributors · Météo © Open-Meteo",
+    ad_label: "Publicité",
+    ad_desc: "Sauvegarde et cybersécurité en une seule solution : protégez les données de votre PC et de vos appareils.",
+    ad_cta: "En savoir plus →",
   },
   es: {
     page_title: "CAMPERappPLUS — Gestión de autocaravana para Windows",
@@ -574,6 +610,9 @@ const I18N = {
     footer_subtitle: "un proyecto independiente para autocaravanistas",
     footer_feedback: "¿Comentarios, errores, ideas? Escríbeme a",
     footer_attribution: "Mapa © OpenStreetMap contributors · Tiempo © Open-Meteo",
+    ad_label: "Publicidad",
+    ad_desc: "Copia de seguridad y ciberseguridad en una sola solución: protege los datos de tu PC y tus dispositivos.",
+    ad_cta: "Saber más →",
   },
 };
 
