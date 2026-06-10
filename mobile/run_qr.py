@@ -7,13 +7,14 @@ Uso:
 import os
 import socket
 import sys
+import threading
+import webbrowser
 from pathlib import Path
 
 # Disabilita l'apertura automatica del browser fatta da Flet con
 # AppView.WEB_BROWSER. Flet aprirebbe Edge sull'URL host (0.0.0.0), che
-# il browser rifiuta come ERR_ADDRESS_INVALID. Con questa env var settata
-# Flet salta open_in_browser() (vedi flet/app.py: il check e' "url_prefix
-# is None") e l'utente apre manualmente localhost dal PC o scansiona il QR.
+# il browser rifiuta come ERR_ADDRESS_INVALID. L'apertura su localhost
+# (URL valido) la facciamo noi in main_run() con un timer.
 os.environ.setdefault("FLET_DISPLAY_URL_PREFIX", "")
 
 # Su Windows il terminale e' spesso cp1252: senza UTF-8 i blocchi del QR
@@ -87,6 +88,11 @@ def main_run() -> None:
     print("  (Al primo avvio Windows mostra un popup: 'Consenti accesso'.)")
     print("=" * 64)
     print()
+
+    # Apre il browser sul PC su localhost (URL valido, a differenza di
+    # 0.0.0.0). Timer perche' ft.run() blocca: il browser parte quando il
+    # server e' gia' su.
+    threading.Timer(2.0, webbrowser.open, [f"http://localhost:{port}"]).start()
 
     # assets_dir: Flet serve i file qui dentro alla root dell'URL e
     # SOVRASCRIVE quelli di default (es. manifest.json, icons/*, favicon.png).
