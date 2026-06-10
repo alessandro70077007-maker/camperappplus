@@ -554,6 +554,27 @@ def build_home(state: AppState) -> ft.Control:
         color=ft.Colors.ON_SURFACE_VARIANT, italic=True,
     ))
 
+    # Banner affiliato Acronis: stesso annuncio CJ della landing page.
+    async def open_acronis(e):
+        if state.url_launcher is not None:
+            await state.url_launcher.launch_url(affiliates.acronis_banner_url())
+
+    children.append(ft.Container(
+        content=ft.Column([
+            ft.Text(L("ad_label").upper(), size=10,
+                    color=ft.Colors.ON_SURFACE_VARIANT),
+            ft.Text("Acronis Cyber Protect",
+                    weight=ft.FontWeight.BOLD, size=15),
+            ft.Text(L("ad_acronis_desc"), size=12,
+                    color=ft.Colors.ON_SURFACE_VARIANT),
+            ft.FilledButton(L("ad_learn_more"), icon=ft.Icons.OPEN_IN_NEW,
+                            on_click=open_acronis),
+        ], spacing=6, tight=True),
+        padding=12,
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+        border_radius=10,
+    ))
+
     return _scrollable(children)
 
 

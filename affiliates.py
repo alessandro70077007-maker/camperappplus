@@ -25,6 +25,10 @@ CJ_CLICK_SERVER = "www.anrdoezrs.net"
 # Consente di distinguere in dashboard CJ il traffico camperapp da altri canali.
 _CJ_SUB_ID = "camperapp_poi"
 
+# Banner CJ per Acronis Cyber Protect: stesso annuncio presente nella landing
+# page GitHub Pages (property ID 101739837, link ID 14426269).
+_ACRONIS_CLICK_URL = "https://www.tkqlhce.com/click-101739837-14426269"
+
 
 _BOOKING_LANG = {
     "it": "it", "en": "en-gb", "de": "de", "fr": "fr", "es": "es",
@@ -33,6 +37,12 @@ _BOOKING_LANG = {
 
 def is_enabled() -> bool:
     return bool(CJ_PUBLISHER_ID and CJ_ADVERTISER_ID and CJ_CLICK_SERVER)
+
+
+def acronis_banner_url(sid: str = "camperapp_mobile") -> str:
+    """Click-link CJ del banner Acronis Cyber Protect. Il sub-ID distingue
+    in dashboard CJ i click dell'app mobile da quelli della landing page."""
+    return f"{_ACRONIS_CLICK_URL}?sid={sid}"
 
 
 def booking_search_url(name: str, lat: float | None = None,

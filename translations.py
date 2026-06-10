@@ -1102,6 +1102,21 @@ TRANSLATIONS = {
         "fr": "🏨 Réserver sur Booking",
         "es": "🏨 Reservar en Booking",
     },
+    "ad_label": {
+        "it": "Annuncio", "en": "Advertisement", "de": "Anzeige",
+        "fr": "Publicité", "es": "Publicidad",
+    },
+    "ad_acronis_desc": {
+        "it": "Backup e sicurezza informatica in un'unica soluzione: proteggi i dati del tuo PC e dei tuoi dispositivi.",
+        "en": "Backup and cybersecurity in one solution: protect the data on your PC and devices.",
+        "de": "Backup und Cybersicherheit in einer Lösung: Schütze die Daten auf deinem PC und deinen Geräten.",
+        "fr": "Sauvegarde et cybersécurité en une seule solution : protégez les données de votre PC et de vos appareils.",
+        "es": "Copia de seguridad y ciberseguridad en una sola solución: protege los datos de tu PC y tus dispositivos.",
+    },
+    "ad_learn_more": {
+        "it": "Scopri di più", "en": "Learn more", "de": "Mehr erfahren",
+        "fr": "En savoir plus", "es": "Saber más",
+    },
     "affiliate_disclosure": {
         "it": "ⓘ I link 'Prenota su Booking' sono affiliati: se prenoti riceviamo una piccola commissione, senza costi extra per te.",
         "en": "ⓘ 'Book on Booking' links are affiliate links: we earn a small commission if you book, at no extra cost to you.",
