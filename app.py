@@ -746,17 +746,6 @@ elif pagina == "map":
                     popup_html += f"<br>{L('poi_fee')}: {r['fee']}"
                 if r.get("website"):
                     popup_html += f'<br><a href="{r["website"]}" target="_blank">{L("poi_website")}</a>'
-                # Affiliate Booking: solo per campeggi e aree sosta camper, e solo
-                # se BOOKING_AID e' impostato (altrimenti booking_search_url=None).
-                if r["type"] in ("camp_site", "caravan_site"):
-                    burl = affiliates.booking_search_url(
-                        r["name"] or "", r["lat"], r["lon"], LANG,
-                    )
-                    if burl:
-                        popup_html += (
-                            f'<br><a href="{burl}" target="_blank" '
-                            f'rel="sponsored noopener">{L("poi_book_booking")}</a>'
-                        )
                 folium.CircleMarker(
                     [r["lat"], r["lon"]], radius=7, color=color_hex,
                     fill=True, fill_opacity=0.85, weight=2,
@@ -765,12 +754,6 @@ elif pagina == "map":
                 ).add_to(cluster)
 
             st_folium(fmap, width=None, height=480, returned_objects=[])
-
-            # Disclosure affiliate: visibile solo se ci sono link Booking attivi.
-            if affiliates.is_enabled() and any(
-                r["type"] in ("camp_site", "caravan_site") for r in results
-            ):
-                st.caption(L("affiliate_disclosure"))
 
             # Lista compatta sotto la mappa
             st.markdown(f"**{L('poi_list')}**")

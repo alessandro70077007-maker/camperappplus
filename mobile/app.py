@@ -2710,21 +2710,6 @@ def _poi_card(state: AppState, r: dict) -> ft.Control:
             L("map_website"), icon=ft.Icons.LANGUAGE, on_click=open_site,
         ))
 
-    # Affiliate Booking: solo per campeggi e aree sosta camper, e solo
-    # se le credenziali CJ sono configurate (altrimenti booking_search_url=None).
-    if r.get("type") in ("camp_site", "caravan_site"):
-        burl = affiliates.booking_search_url(
-            r.get("name") or "", r.get("lat"), r.get("lon"), state.lang,
-        )
-        if burl:
-            async def open_booking(e, u=burl):
-                if state.url_launcher is not None:
-                    await state.url_launcher.launch_url(u)
-            actions.append(ft.OutlinedButton(
-                L("poi_book_booking"), icon=ft.Icons.HOTEL,
-                on_click=open_booking,
-            ))
-
     return ft.Container(
         content=ft.Column([
             ft.Row([
@@ -2879,15 +2864,6 @@ def build_map(state: AppState) -> ft.Control:
         ))
         for r in state.map_results:
             children.append(_poi_card(state, r))
-        # Disclosure affiliate: visibile solo se ci sono link Booking attivi.
-        if affiliates.is_enabled() and any(
-            r.get("type") in ("camp_site", "caravan_site")
-            for r in state.map_results
-        ):
-            children.append(ft.Text(
-                L("affiliate_disclosure"), size=10,
-                color=ft.Colors.ON_SURFACE_VARIANT,
-            ))
     elif (state.map_results_label and not state.map_loading
           and not state.map_error_key):
         children.append(_info_box(L("map_no_results"), ft.Icons.SEARCH_OFF))

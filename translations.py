@@ -1095,13 +1095,6 @@ TRANSLATIONS = {
         "it": "Sito web", "en": "Website", "de": "Webseite",
         "fr": "Site web", "es": "Sitio web",
     },
-    "poi_book_booking": {
-        "it": "🏨 Prenota su Booking",
-        "en": "🏨 Book on Booking",
-        "de": "🏨 Auf Booking buchen",
-        "fr": "🏨 Réserver sur Booking",
-        "es": "🏨 Reservar en Booking",
-    },
     "ad_label": {
         "it": "Annuncio", "en": "Advertisement", "de": "Anzeige",
         "fr": "Publicité", "es": "Publicidad",
@@ -1116,13 +1109,6 @@ TRANSLATIONS = {
     "ad_learn_more": {
         "it": "Scopri di più", "en": "Learn more", "de": "Mehr erfahren",
         "fr": "En savoir plus", "es": "Saber más",
-    },
-    "affiliate_disclosure": {
-        "it": "ⓘ I link 'Prenota su Booking' sono affiliati: se prenoti riceviamo una piccola commissione, senza costi extra per te.",
-        "en": "ⓘ 'Book on Booking' links are affiliate links: we earn a small commission if you book, at no extra cost to you.",
-        "de": "ⓘ Die 'Auf Booking buchen'-Links sind Affiliate-Links: Wir erhalten eine kleine Provision bei einer Buchung, ohne Mehrkosten für dich.",
-        "fr": "ⓘ Les liens 'Réserver sur Booking' sont affiliés : nous touchons une petite commission si vous réservez, sans frais supplémentaires pour vous.",
-        "es": "ⓘ Los enlaces 'Reservar en Booking' son afiliados: recibimos una pequeña comisión si reservas, sin coste adicional para ti.",
     },
     "poi_list": {
         "it": "Elenco", "en": "List", "de": "Liste", "fr": "Liste", "es": "Lista",
