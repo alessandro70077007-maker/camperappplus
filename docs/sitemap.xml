@@ -3,14 +3,62 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://alessandro70077007-maker.github.io/camperappplus/</loc>
-    <lastmod>2026-05-08</lastmod>
+    <lastmod>2026-08-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="it" href="https://alessandro70077007-maker.github.io/camperappplus/?lang=it"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://alessandro70077007-maker.github.io/camperappplus/?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://alessandro70077007-maker.github.io/camperappplus/?lang=de"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://alessandro70077007-maker.github.io/camperappplus/?lang=fr"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://alessandro70077007-maker.github.io/camperappplus/?lang=es"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+      <xhtml:link rel="alternate" hreflang="it" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+      <xhtml:link rel="alternate" hreflang="en" href="https://alessandro70077007-maker.github.io/camperappplus/en/"/>
+      <xhtml:link rel="alternate" hreflang="de" href="https://alessandro70077007-maker.github.io/camperappplus/de/"/>
+      <xhtml:link rel="alternate" hreflang="fr" href="https://alessandro70077007-maker.github.io/camperappplus/fr/"/>
+      <xhtml:link rel="alternate" hreflang="es" href="https://alessandro70077007-maker.github.io/camperappplus/es/"/>
+      <xhtml:link rel="alternate" hreflang="x-default" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+  </url>
+  <url>
+    <loc>https://alessandro70077007-maker.github.io/camperappplus/en/</loc>
+    <lastmod>2026-08-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="it" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+      <xhtml:link rel="alternate" hreflang="en" href="https://alessandro70077007-maker.github.io/camperappplus/en/"/>
+      <xhtml:link rel="alternate" hreflang="de" href="https://alessandro70077007-maker.github.io/camperappplus/de/"/>
+      <xhtml:link rel="alternate" hreflang="fr" href="https://alessandro70077007-maker.github.io/camperappplus/fr/"/>
+      <xhtml:link rel="alternate" hreflang="es" href="https://alessandro70077007-maker.github.io/camperappplus/es/"/>
+      <xhtml:link rel="alternate" hreflang="x-default" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+  </url>
+  <url>
+    <loc>https://alessandro70077007-maker.github.io/camperappplus/de/</loc>
+    <lastmod>2026-08-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="it" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+      <xhtml:link rel="alternate" hreflang="en" href="https://alessandro70077007-maker.github.io/camperappplus/en/"/>
+      <xhtml:link rel="alternate" hreflang="de" href="https://alessandro70077007-maker.github.io/camperappplus/de/"/>
+      <xhtml:link rel="alternate" hreflang="fr" href="https://alessandro70077007-maker.github.io/camperappplus/fr/"/>
+      <xhtml:link rel="alternate" hreflang="es" href="https://alessandro70077007-maker.github.io/camperappplus/es/"/>
+      <xhtml:link rel="alternate" hreflang="x-default" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+  </url>
+  <url>
+    <loc>https://alessandro70077007-maker.github.io/camperappplus/fr/</loc>
+    <lastmod>2026-08-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="it" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+      <xhtml:link rel="alternate" hreflang="en" href="https://alessandro70077007-maker.github.io/camperappplus/en/"/>
+      <xhtml:link rel="alternate" hreflang="de" href="https://alessandro70077007-maker.github.io/camperappplus/de/"/>
+      <xhtml:link rel="alternate" hreflang="fr" href="https://alessandro70077007-maker.github.io/camperappplus/fr/"/>
+      <xhtml:link rel="alternate" hreflang="es" href="https://alessandro70077007-maker.github.io/camperappplus/es/"/>
+      <xhtml:link rel="alternate" hreflang="x-default" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+  </url>
+  <url>
+    <loc>https://alessandro70077007-maker.github.io/camperappplus/es/</loc>
+    <lastmod>2026-08-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+      <xhtml:link rel="alternate" hreflang="it" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
+      <xhtml:link rel="alternate" hreflang="en" href="https://alessandro70077007-maker.github.io/camperappplus/en/"/>
+      <xhtml:link rel="alternate" hreflang="de" href="https://alessandro70077007-maker.github.io/camperappplus/de/"/>
+      <xhtml:link rel="alternate" hreflang="fr" href="https://alessandro70077007-maker.github.io/camperappplus/fr/"/>
+      <xhtml:link rel="alternate" hreflang="es" href="https://alessandro70077007-maker.github.io/camperappplus/es/"/>
+      <xhtml:link rel="alternate" hreflang="x-default" href="https://alessandro70077007-maker.github.io/camperappplus/"/>
   </url>
 </urlset>
